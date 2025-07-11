@@ -11,15 +11,14 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
 import os
-
 import environ
-environ.Env()
-environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -83,9 +82,9 @@ DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.postgresql',
       'NAME': 'mergeconflict',
-      'USER': os.environ['DB_USER'],
-      'PASSWORD': os.environ['DB_PW'],
-      'HOST': os.environ['DB_HOST'],
+      'USER': env('DB_USER'),
+      'PASSWORD': env('DB_PW'),
+      'HOST': env('DB_HOST'),
       'PORT': '5432',
     }
 }
@@ -131,3 +130,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom User Model
+AUTH_USER_MODEL = 'main_app.User'
