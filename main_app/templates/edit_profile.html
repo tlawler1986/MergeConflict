@@ -1,247 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Conflict - Edit Profile</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
 
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-color: #f4f4f4;
-            text-align: center;
-            color: black;
-        }
+{% block title %}Edit Profile - Merge Conflict{% endblock %}
 
-        h1 {
-            font-size: 36px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
+{% block extra_css %}
+.avatar-preview {
+    text-align: center;
+    margin-bottom: 30px;
+}
 
-        .header-bar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background-color: #3b3b3b;
-            color: white;
-        }
-        
-        .header-link {
-            color: white;
-            font-size: 18px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-left: 20px;
-        }
+.avatar-preview img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid #ddd;
+    object-fit: cover;
+}
 
-        .header-link:hover {
-            color: #ccc;
-        }
+.default-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: #ddd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    color: #666;
+    border: 3px solid #ddd;
+    margin: 0 auto;
+}
 
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+}
 
-        .profile-container {
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 40px;
-            background-color: white;
-            border: 3px solid black;
-            border-radius: 12px;
-            text-align: left;
-        }
+.form-actions .btn-secondary {
+    background-color: #666;
+    color: white;
+    border-color: #666;
+}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+.form-actions .btn-secondary:hover {
+    background-color: #555;
+}
+{% endblock %}
 
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            transition: border-color 0.3s ease;
-        }
-
-        input[type="text"]:focus,
-        input[type="email"]:focus {
-            outline: none;
-            border-color: #3b3b3b;
-        }
-
-        .avatar-preview {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .avatar-preview img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 3px solid #ddd;
-            object-fit: cover;
-        }
-
-        .default-avatar {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background-color: #ddd;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            color: #666;
-            border: 3px solid #ddd;
-        }
-
-        .btn-primary {
-            background-color: black;
-            color: white;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            margin-right: 10px;
-        }
-
-        .btn-primary:hover {
-            transform: scale(1.05);
-        }
-
-        .btn-secondary {
-            background-color: #666;
-            color: white;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            background-color: #555;
-        }
-
-        .form-actions {
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .error {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <div class="header-bar">
-        <a href="/" class="logo" style="text-decoration: none; color: white;">Merge Conflict</a>
-        <div>
-            <span style="margin-right: 20px;">Welcome, {{ user.username }}!</span>
-            <a href="/room/" class="header-link">Game Dashboard</a>
-            <a href="/accounts/logout/" class="header-link">Logout</a>
-        </div>
-    </div>
-
-    <!-- Main Content -->
+{% block content %}
+<div class="form-container" style="max-width: 600px;">
     <h1>Edit Profile</h1>
     
-    <div class="profile-container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="success">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="success-message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="avatar-preview">
-                {% if user.avatar_url %}
-                    <img src="{{ user.avatar_url }}" alt="Profile Picture">
-                {% else %}
-                    <div class="default-avatar">{{ user.username.0|upper }}</div>
-                {% endif %}
-            </div>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="avatar-preview">
+            {% if user.avatar_url %}
+                <img src="{{ user.avatar_url.url }}" alt="Profile Picture">
+            {% else %}
+                <div class="default-avatar">{{ user.username.0|upper }}</div>
+            {% endif %}
+        </div>
 
-            <div class="form-group">
-                <label for="avatar">Profile Picture</label>
-                <input type="file" id="avatar" name="avatar" accept="image/*">
-            </div>
+        <div class="form-group">
+            <label for="avatar">Profile Picture</label>
+            <input type="file" id="avatar" name="avatar" accept="image/*">
+        </div>
 
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" value="{{ user.username }}" required>
-                {% if form.username.errors %}
-                    <div class="error">{{ form.username.errors.0 }}</div>
-                {% endif %}
-            </div>
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}" required>
+            {% if form.username.errors %}
+                <div class="error">{{ form.username.errors.0 }}</div>
+            {% endif %}
+        </div>
 
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" required>
-                {% if form.email.errors %}
-                    <div class="error">{{ form.email.errors.0 }}</div>
-                {% endif %}
-            </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+            {% if form.email.errors %}
+                <div class="error">{{ form.email.errors.0 }}</div>
+            {% endif %}
+        </div>
 
-            <div class="form-group">
-                <label for="first_name">First Name</label>
-                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}">
-            </div>
+        <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}">
+        </div>
 
-            <div class="form-group">
-                <label for="last_name">Last Name</label>
-                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}">
-            </div>
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}">
+        </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">Save Changes</button>
-                <a href="/room/" class="btn-secondary">Cancel</a>
-            </div>
-        </form>
-    </div>
-</body>
-</html>
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Changes</button>
+            <a href="/room/" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
