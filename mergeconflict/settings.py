@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'mergeconflict.wsgi.application'
 DATABASES = {
     'default': {
       'ENGINE': 'django.db.backends.postgresql',
-      'NAME': 'catcollector',
+      'NAME': 'mergeconflict',
       'USER': os.environ['DB_USER'],
       'PASSWORD': os.environ['DB_PW'],
       'HOST': os.environ['DB_HOST'],
