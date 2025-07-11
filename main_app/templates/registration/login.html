@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In - Merge Conflict</title>
+    <style>
+        /* Kay-who-codes CSS here */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Arial', sans-serif;
+          display: flex;
+          flex-direction: column;
+          min-height: 100vh;
+          background-color: #f4f4f4;
+          text-align: center;
+          color: black;
+          justify-content: center;
+        }
+
+        h1 {
+          font-size: 36px;
+          font-weight: bold;
+          margin: 20px 0;
+        }
+
+        .header-bar {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px 20px;
+          background-color: #3b3b3b;
+          color: white;
+          z-index: 1000;
+        }
+        
+        .header-link {
+          color: white;
+          font-size: 18px;
+          text-decoration: none;
+          font-weight: bold;
+          margin-left: 20px;
+        }
+
+        .header-link:hover {
+          color: #ccc;
+        }
+
+        .logo {
+          font-size: 24px;
+          font-weight: bold;
+        }
+
+        .form-container {
+          max-width: 400px;
+          margin: 80px auto 20px;
+          padding: 30px;
+          background-color: white;
+          border: 2px solid black;
+          border-radius: 10px;
+        }
+
+        .form-container h1 {
+          font-size: 28px;
+          margin-bottom: 20px;
+        }
+
+        form p {
+          margin-bottom: 15px;
+          text-align: left;
+        }
+
+        form p label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+        }
+
+        form p input {
+          width: 100%;
+          padding: 10px;
+          border: 2px solid #ccc;
+          border-radius: 5px;
+          font-size: 16px;
+        }
+
+        form p input:focus {
+          outline: none;
+          border-color: #333;
+        }
+
+        .submit-btn {
+          background-color: black;
+          color: white;
+          border: 2px solid black;
+          padding: 12px 30px;
+          font-size: 18px;
+          font-weight: bold;
+          border-radius: 5px;
+          cursor: pointer;
+          margin-top: 10px;
+          transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+          transform: scale(1.05);
+          background-color: #333;
+        }
+
+        .signup-link {
+          margin-top: 20px;
+          color: #666;
+        }
+
+        .signup-link a {
+          color: black;
+          font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="logo">Merge Conflict</div>
+        <div>
+            <a href="/accounts/login/" class="header-link">Login</a>
+            <a href="/accounts/signup/" class="header-link">Register</a>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form-container">
+        <h1>Log In</h1>
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="submit-btn">Log In</button>
+        </form>
+
+        <p class="signup-link">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+    </div>
+</body>
+</html>
