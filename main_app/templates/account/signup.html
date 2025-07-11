@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In - Merge Conflict</title>
+    <title>Sign Up - Merge Conflict</title>
     <style>
         /* Kay-who-codes CSS here */
         * {
@@ -74,6 +74,11 @@
           margin-bottom: 20px;
         }
 
+        .error-message {
+          color: red;
+          margin-bottom: 15px;
+        }
+
         form p {
           margin-bottom: 15px;
           text-align: left;
@@ -98,6 +103,36 @@
           border-color: #333;
         }
 
+        .form-group {
+          margin-bottom: 20px;
+          text-align: left;
+        }
+
+        .form-group label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+        }
+
+        .form-group input {
+          width: 100%;
+          padding: 10px;
+          border: 2px solid #ccc;
+          border-radius: 5px;
+          font-size: 16px;
+        }
+
+        .form-group input:focus {
+          outline: none;
+          border-color: #333;
+        }
+
+        .error {
+          color: #dc3545;
+          font-size: 14px;
+          margin-top: 5px;
+        }
+
         .submit-btn {
           background-color: black;
           color: white;
@@ -116,12 +151,12 @@
           background-color: #333;
         }
 
-        .signup-link {
+        .login-link {
           margin-top: 20px;
           color: #666;
         }
 
-        .signup-link a {
+        .login-link a {
           color: black;
           font-weight: bold;
         }
@@ -137,18 +172,33 @@
         </div>
     </div>
 
-    <!-- Login Form -->
+    <!-- Sign Up Form -->
     <div class="form-container">
-        <h1>Log In</h1>
+        <h1>Sign Up</h1>
+        
+        {% if error_message %}
+        <p class="error-message">{{ error_message }}</p>
+        {% endif %}
 
-        <form method="POST" action="{% url 'login' %}">
+        <form method="POST">
             {% csrf_token %}
-            {{ form.as_p }}
-            <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="submit-btn">Log In</button>
+            
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <div class="error">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="submit-btn">Sign Up</button>
         </form>
 
-        <p class="signup-link">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+        <p class="login-link">Already have an account? <a href="{% url 'account_login' %}">Log In</a></p>
     </div>
 </body>
 </html>

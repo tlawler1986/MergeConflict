@@ -6,7 +6,8 @@ from django.views.generic import DetailView, ListView
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
-from .forms import SignUpForm
+from django.contrib import messages
+from .forms import SignUpForm, ProfileEditForm
 
 # Create your views here.
 def home(request):
@@ -33,3 +34,18 @@ def signup(request):
         form = SignUpForm()
     context = {'form': form, 'error_message': error_message}
     return render(request, 'registration/signup.html', context)
+
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            if 'avatar' in request.FILES:
+                user.avatar_url = request.FILES['avatar']
+            user.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('edit_profile')
+    else:
+        form = ProfileEditForm(instance=request.user)
+    return render(request, 'edit_profile.html', {'form': form})
