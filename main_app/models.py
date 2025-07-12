@@ -9,7 +9,7 @@ class User(AbstractUser):
     date_joined = None
     
     # Add our custom fields from ERD
-    avatar_url = models.URLField(blank=True, null=True)
+    avatar_url = models.ImageField(upload_to='avatars/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

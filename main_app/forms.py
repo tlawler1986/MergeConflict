@@ -10,3 +10,11 @@ class SignUpForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'email', 'password1', 'password2')
+
+
+class ProfileEditForm(forms.ModelForm):
+    avatar = forms.ImageField(required=False)
+    
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name')

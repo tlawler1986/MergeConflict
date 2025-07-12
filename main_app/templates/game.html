@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Conflict - Active Game</title>
+    <style>
+        /* Kay-who-codes base CSS */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+
+        body {
+          font-family: 'Arial', sans-serif;
+          background-color: #2c2c2c;
+          color: white;
+          min-height: 100vh;
+          overflow-x: hidden;
+        }
+
+        .header-bar {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 20px;
+          background-color: #1a1a1a;
+          border-bottom: 2px solid #444;
+        }
+        
+        .header-link {
+          color: white;
+          font-size: 16px;
+          text-decoration: none;
+          margin-left: 15px;
+        }
+
+        .header-link:hover {
+          color: #ccc;
+        }
+
+        .logo {
+          font-size: 20px;
+          font-weight: bold;
+        }
+
+        /* Game Layout */
+        .game-container {
+          display: grid;
+          grid-template-areas: 
+            "scoreboard scoreboard"
+            "black-card submissions"
+            "hand hand";
+          grid-template-rows: auto 1fr auto;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          padding: 20px;
+          height: calc(100vh - 60px);
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+          grid-area: scoreboard;
+          background-color: #3a3a3a;
+          border: 2px solid #555;
+          border-radius: 10px;
+          padding: 15px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .game-info {
+          display: flex;
+          gap: 30px;
+          align-items: center;
+        }
+
+        .round-info {
+          text-align: center;
+        }
+
+        .round-number {
+          font-size: 24px;
+          font-weight: bold;
+          color: #ffd700;
+        }
+
+        .current-judge {
+          font-size: 16px;
+          color: #87ceeb;
+        }
+
+        .players-scores {
+          display: flex;
+          gap: 20px;
+        }
+
+        .player-score {
+          text-align: center;
+          padding: 8px 12px;
+          background-color: #4a4a4a;
+          border-radius: 5px;
+          min-width: 80px;
+        }
+
+        .player-score.current-judge {
+          background-color: #ffd700;
+          color: black;
+        }
+
+        .player-score.current-user {
+          border: 2px solid #87ceeb;
+        }
+
+        .player-name {
+          font-size: 12px;
+          margin-bottom: 3px;
+        }
+
+        .score {
+          font-size: 18px;
+          font-weight: bold;
+        }
+
+        /* Black Card Area */
+        .black-card-area {
+          grid-area: black-card;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .black-card {
+          width: 250px;
+          height: 350px;
+          background-color: black;
+          color: white;
+          border: 3px solid #666;
+          border-radius: 12px;
+          padding: 20px;
+          font-size: 20px;
+          font-weight: bold;
+          display: flex;
+          align-items: flex-start;
+          text-align: left;
+          margin-bottom: 20px;
+        }
+
+        .turn-timer {
+          background-color: #ff6b6b;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 20px;
+          font-weight: bold;
+          margin-top: 10px;
+        }
+
+        /* Submissions Area */
+        .submissions-area {
+          grid-area: submissions;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .submissions-title {
+          font-size: 18px;
+          margin-bottom: 20px;
+          color: #ccc;
+        }
+
+        .submitted-cards {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+          justify-content: center;
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .submitted-card {
+          width: 180px;
+          height: 250px;
+          background-color: white;
+          color: black;
+          border: 3px solid #333;
+          border-radius: 12px;
+          padding: 15px;
+          font-size: 16px;
+          font-weight: bold;
+          display: flex;
+          align-items: flex-start;
+          text-align: left;
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+
+        .submitted-card:hover {
+          transform: scale(1.05);
+          border-color: #ffd700;
+        }
+
+        .submitted-card.selected {
+          border-color: #28a745;
+          border-width: 4px;
+        }
+
+        .judge-controls {
+          margin-top: 20px;
+        }
+
+        /* Player Hand */
+        .player-hand {
+          grid-area: hand;
+          background-color: #3a3a3a;
+          border: 2px solid #555;
+          border-radius: 10px;
+          padding: 15px;
+        }
+
+        .hand-title {
+          text-align: center;
+          margin-bottom: 15px;
+          font-size: 18px;
+          color: #ccc;
+        }
+
+        .hand-cards {
+          display: flex;
+          gap: 10px;
+          overflow-x: auto;
+          padding-bottom: 10px;
+        }
+
+        .hand-card {
+          min-width: 150px;
+          height: 200px;
+          background-color: white;
+          color: black;
+          border: 3px solid #333;
+          border-radius: 12px;
+          padding: 12px;
+          font-size: 14px;
+          font-weight: bold;
+          display: flex;
+          align-items: flex-start;
+          text-align: left;
+          cursor: pointer;
+          transition: transform 0.2s ease;
+        }
+
+        .hand-card:hover {
+          transform: translateY(-10px);
+          border-color: #007acc;
+        }
+
+        .hand-card.selected {
+          border-color: #28a745;
+          border-width: 4px;
+          transform: translateY(-15px);
+        }
+
+        /* Action Buttons */
+        .action-button {
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: bold;
+          margin: 10px;
+          cursor: pointer;
+          border: 2px solid;
+          border-radius: 8px;
+          transition: transform 0.3s ease;
+        }
+
+        .action-button:hover {
+          transform: scale(1.05);
+        }
+
+        .submit-button {
+          background-color: #28a745;
+          color: white;
+          border-color: #28a745;
+        }
+
+        .judge-button {
+          background-color: #ffd700;
+          color: black;
+          border-color: #ffd700;
+        }
+
+        .admin-button {
+          background-color: #dc3545;
+          color: white;
+          border-color: #dc3545;
+        }
+
+        .action-button:disabled {
+          background-color: #6c757d;
+          border-color: #6c757d;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        /* Admin Controls */
+        .admin-controls {
+          position: absolute;
+          top: 70px;
+          right: 20px;
+          background-color: #4a4a4a;
+          border: 2px solid #666;
+          border-radius: 8px;
+          padding: 15px;
+          display: none;
+        }
+
+        .admin-controls.show {
+          display: block;
+        }
+
+        .score-edit {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .score-edit input {
+          width: 50px;
+          padding: 5px;
+          border: 1px solid #666;
+          border-radius: 4px;
+          background-color: #2c2c2c;
+          color: white;
+          text-align: center;
+        }
+
+        /* Game Status */
+        .game-status {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #007acc;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 20px;
+          font-weight: bold;
+        }
+
+        @media (max-width: 1024px) {
+          .game-container {
+            grid-template-areas: 
+              "scoreboard"
+              "black-card"
+              "submissions"
+              "hand";
+            grid-template-columns: 1fr;
+          }
+          
+          .black-card, .submitted-card {
+            width: 200px;
+            height: 280px;
+          }
+          
+          .hand-card {
+            min-width: 120px;
+            height: 160px;
+            font-size: 12px;
+          }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-bar">
+        <div class="logo">Merge Conflict</div>
+        <div>
+            <a href="#" class="header-link" onclick="toggleAdminControls()">⚙️ Host Controls</a>
+            <a href="#" class="header-link" onclick="confirmLeaveGame()">Leave Game</a>
+        </div>
+    </div>
+
+    <!-- Admin Controls (Hidden by default) -->
+    <div class="admin-controls" id="admin-controls">
+        <h4 style="margin-bottom: 15px;">Host Controls</h4>
+        <div class="score-edit">
+            <label>Edit CodeMaster score:</label>
+            <input type="number" value="2" id="score-codemaster">
+            <button class="action-button submit-button" style="padding: 5px 10px; margin: 0;" onclick="updateScore('CodeMaster')">Update</button>
+        </div>
+        <div class="score-edit">
+            <label>Edit BugHunter23 score:</label>
+            <input type="number" value="1" id="score-bughunter">
+            <button class="action-button submit-button" style="padding: 5px 10px; margin: 0;" onclick="updateScore('BugHunter23')">Update</button>
+        </div>
+        <button class="action-button admin-button" onclick="endGameEarly()">End Game Early</button>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container">
+        <!-- Scoreboard -->
+        <div class="scoreboard">
+            <div class="game-info">
+                <div class="round-info">
+                    <div class="round-number">Round 3/10</div>
+                    <div class="current-judge">Judge: GitGuru</div>
+                </div>
+                <div class="turn-timer">⏰ 2:45 remaining</div>
+            </div>
+            
+            <div class="players-scores">
+                <div class="player-score current-user">
+                    <div class="player-name">CodeMaster (You)</div>
+                    <div class="score">2</div>
+                </div>
+                <div class="player-score">
+                    <div class="player-name">BugHunter23</div>
+                    <div class="score">1</div>
+                </div>
+                <div class="player-score current-judge">
+                    <div class="player-name">GitGuru</div>
+                    <div class="score">0</div>
+                </div>
+                <div class="player-score">
+                    <div class="player-name">StackOverflowHero</div>
+                    <div class="score">3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Black Card Area -->
+        <div class="black-card-area">
+            <div class="black-card">
+                Step 1: ____.<br>
+                Step 2: ____.<br>
+                Step 3: Profit.
+            </div>
+            <div style="text-align: center;">
+                <p style="color: #ccc; margin-bottom: 10px;">GitGuru is the judge this round</p>
+                <div class="game-status">Waiting for players to submit cards...</div>
+            </div>
+        </div>
+
+        <!-- Submissions Area -->
+        <div class="submissions-area">
+            <div class="submissions-title">Submitted Cards (2/3 players)</div>
+            <div class="submitted-cards">
+                <div class="submitted-card">
+                    Copying and pasting from Stack Overflow without understanding the code.
+                </div>
+                <div class="submitted-card">
+                    Deleting the entire database in production because you forgot the WHERE clause.
+                </div>
+                <div style="color: #666; font-style: italic; align-self: center;">
+                    Waiting for more submissions...
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Hand -->
+        <div class="player-hand">
+            <div class="hand-title">Your Hand (Click a card to play it)</div>
+            <div class="hand-cards">
+                <div class="hand-card" onclick="selectCard(this)">
+                    Explaining to your mother what you do for a living.
+                </div>
+                <div class="hand-card selected" onclick="selectCard(this)">
+                    Pushing to master on a Friday afternoon.
+                </div>
+                <div class="hand-card" onclick="selectCard(this)">
+                    A perfectly documented API that actually works as described.
+                </div>
+                <div class="hand-card" onclick="selectCard(this)">
+                    Code that works on the first try.
+                </div>
+                <div class="hand-card" onclick="selectCard(this)">
+                    Rubber duck debugging.
+                </div>
+                <div class="hand-card" onclick="selectCard(this)">
+                    The senior developer who never comments their code.
+                </div>
+                <div class="hand-card" onclick="selectCard(this)">
+                    Merge conflicts that destroy your soul.
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="action-button submit-button" onclick="submitCard()" id="submit-btn">
+                    Submit Selected Card
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCard = null;
+        let isJudge = false; // This would be determined by Django backend
+        
+        function selectCard(cardElement) {
+            // Remove selection from all cards
+            document.querySelectorAll('.hand-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select clicked card
+            cardElement.classList.add('selected');
+            selectedCard = cardElement.textContent;
+            
+            // Enable submit button
+            document.getElementById('submit-btn').disabled = false;
+        }
+        
+        function submitCard() {
+            if (selectedCard) {
+                alert(`Submitted card: "${selectedCard}"`);
+                // In Django, this would send the card to the backend
+                // and update the game state
+            }
+        }
+        
+        function selectSubmittedCard(cardElement) {
+            if (!isJudge) return;
+            
+            // Remove selection from all submitted cards
+            document.querySelectorAll('.submitted-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Select clicked card
+            cardElement.classList.add('selected');
+        }
+        
+        function toggleAdminControls() {
+            const controls = document.getElementById('admin-controls');
+            controls.classList.toggle('show');
+        }
+        
+        function updateScore(playerName) {
+            const inputId = 'score-' + playerName.toLowerCase().replace(/[0-9]/g, '');
+            const newScore = document.getElementById(inputId).value;
+            alert(`Updated ${playerName}'s score to ${newScore}`);
+            // In Django, this would update the GamePlayer model
+        }
+        
+        function endGameEarly() {
+            if (confirm('Are you sure you want to end the game early?')) {
+                alert('Ending game early and showing results...');
+                // In Django, this would redirect to results page
+            }
+        }
+        
+        function confirmLeaveGame() {
+            if (confirm('Are you sure you want to leave the game?')) {
+                alert('Leaving game...');
+                // In Django, this would handle player disconnection
+            }
+        }
+    </script>
+</body>
+</html>
