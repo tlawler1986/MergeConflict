@@ -165,11 +165,12 @@ ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 # Email backend for development (console output)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# For production, you would use SMTP settings like:
+# For production or to test real emails, uncomment and configure:
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-# EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-# DEFAULT_FROM_EMAIL = 'noreply@mergeconflict.com'
+# EMAIL_HOST_USER = 'your-email@gmail.com'  # or env('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = 'your-app-password'  # or env('EMAIL_HOST_PASSWORD')
+# DEFAULT_FROM_EMAIL = 'Merge Conflict <noreply@mergeconflict.com>'
+# SERVER_EMAIL = 'Merge Conflict <noreply@mergeconflict.com>'
