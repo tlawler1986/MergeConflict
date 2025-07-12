@@ -174,3 +174,20 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_HOST_PASSWORD = 'your-app-password'  # or env('EMAIL_HOST_PASSWORD')
 # DEFAULT_FROM_EMAIL = 'Merge Conflict <noreply@mergeconflict.com>'
 # SERVER_EMAIL = 'Merge Conflict <noreply@mergeconflict.com>'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cards_cache_table',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,  # Remove 1/3 of entries when MAX_ENTRIES is reached
+        }
+    }
+}
+
+CACHE_TTL = {
+    'api_packs': 86400,    # 24 hours for pack list
+    'api_cards': 3600,     # 1 hour for cards
+    'api_default': 600,    # 10 minutes default
+}
