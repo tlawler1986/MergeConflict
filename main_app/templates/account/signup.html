@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Merge Conflict{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Sign Up</h1>
+    
+    {% if error_message %}
+        <div class="error-message">{{ error_message }}</div>
+    {% endif %}
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="error">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn-primary">Sign Up</button>
+    </form>
+    
+    <p class="text-muted">
+        Already have an account? <a href="{% url 'account_login' %}" class="link">Log In</a>
+    </p>
+</div>
+{% endblock %}

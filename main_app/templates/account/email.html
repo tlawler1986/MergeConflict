@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Email Addresses - Merge Conflict{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Email Addresses</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="{% if message.tags == 'success' %}success-message{% else %}error-message{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <h2>Your Email Addresses</h2>
+    
+    <form method="POST" action="{% url 'account_email' %}">
+        {% csrf_token %}
+        
+        {% for emailaddress in user.emailaddress_set.all %}
+            <div style="margin-bottom: 20px; padding: 15px; border: 2px solid #ddd; border-radius: 5px; text-align: left;">
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="radio" name="email" value="{{ emailaddress.email }}" 
+                           {% if emailaddress.primary %}checked{% endif %}>
+                    {{ emailaddress.email }}
+                    {% if emailaddress.primary %}<strong>(Primary)</strong>{% endif %}
+                    {% if emailaddress.verified %}
+                        <span style="color: green;">✓ Verified</span>
+                    {% else %}
+                        <span style="color: red;">✗ Unverified</span>
+                    {% endif %}
+                </label>
+                
+                {% if not emailaddress.primary %}
+                    <button type="submit" name="action_primary" value="{{ emailaddress.email }}" 
+                            class="btn-secondary" style="font-size: 14px; padding: 8px 16px; margin-top: 10px;">
+                        Make Primary
+                    </button>
+                {% endif %}
+                
+                {% if not emailaddress.verified %}
+                    <button type="submit" name="action_send" value="{{ emailaddress.email }}" 
+                            class="btn-secondary" style="font-size: 14px; padding: 8px 16px; margin-top: 10px;">
+                        Re-send Verification
+                    </button>
+                {% endif %}
+                
+                {% if user.emailaddress_set.count > 1 %}
+                    <button type="submit" name="action_remove" value="{{ emailaddress.email }}" 
+                            class="btn-secondary" style="font-size: 14px; padding: 8px 16px; margin-top: 10px; background-color: #dc3545; color: white; border-color: #dc3545;">
+                        Remove
+                    </button>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </form>
+    
+    <h2 style="margin-top: 30px;">Add Email Address</h2>
+    
+    <form method="POST" action="{% url 'account_email' %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_email">Email address</label>
+            <input type="email" name="email" id="id_email" required>
+        </div>
+        
+        <button type="submit" name="action_add" class="btn-primary">Add Email</button>
+    </form>
+    
+    <p class="text-muted">
+        <a href="/room/" class="link">Back to Game Dashboard</a>
+    </p>
+</div>
+{% endblock %}

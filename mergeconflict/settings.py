@@ -43,6 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'mergeconflict.urls'
@@ -126,6 +131,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (User uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -137,3 +146,31 @@ AUTH_USER_MODEL = 'main_app.User'
 # Login/Logout Redirects
 LOGIN_REDIRECT_URL = '/room/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Django-allauth configuration
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Allauth settings
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+# Email backend for development (console output)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production or to test real emails, uncomment and configure:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'  # or env('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = 'your-app-password'  # or env('EMAIL_HOST_PASSWORD')
+# DEFAULT_FROM_EMAIL = 'Merge Conflict <noreply@mergeconflict.com>'
+# SERVER_EMAIL = 'Merge Conflict <noreply@mergeconflict.com>'
