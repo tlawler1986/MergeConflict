@@ -194,9 +194,9 @@ def start_game(request, room_code):
         messages.error(request, "Only the room creator can start the game")
         return redirect('room', room_code=room_code)
 
-    # Check if enough players (minimum 3)
-    if room.memberships.filter(is_active=True).count() < 3:
-        messages.error(request, "Need at least 3 players to start")
+    # Check if enough players (minimum 2)
+    if room.memberships.filter(is_active=True).count() < 2:
+        messages.error(request, "Need at least 2 players to start")
         return redirect('room', room_code=room_code)
 
     # Create and start the game

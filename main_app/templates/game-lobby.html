@@ -267,8 +267,8 @@
 
         <!-- Status Message -->
         <div class="status-message">
-            {% if player_count < 3 %}
-                Waiting for players to join... Need at least 3 players to start the game. (Currently {{ player_count }} player{{ player_count|pluralize }})
+            {% if player_count < 2 %}
+                Waiting for players to join... Need at least 2 players to start the game. (Currently {{ player_count }} player{{ player_count|pluralize }})
             {% else %}
                 Ready to start! {{ player_count }} players in the room.
             {% endif %}
@@ -325,7 +325,7 @@
                 <form method="post" action="{% url 'start_game' room.room_code %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="action-button start-button" id="start-btn" 
-                            {% if player_count < 3 %}disabled{% endif %}>
+                            {% if player_count < 2 %}disabled{% endif %}>
                         Start Game
                     </button>
                 </form>
