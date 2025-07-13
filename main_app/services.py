@@ -94,9 +94,9 @@ class GameService:
 
     return round_obj
 
-@staticmethod
-@transaction.atomic
-def submit_card(player, round_obj, card_id):
+  @staticmethod
+  @transaction.atomic
+  def submit_card(player, round_obj, card_id):
     """Submit a white card for the round"""
     # Check if player already submitted
     if CardSubmission.objects.filter(
@@ -105,7 +105,7 @@ def submit_card(player, round_obj, card_id):
     ).exists():
       raise Exception("Already submitted for this round")
 
-  # Find card in player's hand
+    # Find card in player's hand
     card_hand = player.card_hand or []
     selected_card = None
 
@@ -124,43 +124,43 @@ def submit_card(player, round_obj, card_id):
       white_cards=[selected_card]  # Support multiple cards for pick > 1
     )
 
-  # Remove card from hand
+    # Remove card from hand
     card_hand = [c for c in card_hand if c['id'] != card_id]
     player.card_hand = card_hand
     player.save()
 
-  # Deal replacement card
+    # Deal replacement card
     GameService.deal_white_cards(player, count=10)
 
     return submission
 
-@staticmethod
-@transaction.atomic
-def select_winner(round_obj, submission_id, judge):
-  """Judge selects the winning submission"""
-  # Verify judge
-  if round_obj.judge.id != judge.id:
-    raise Exception("Only the judge can select winner")
+  @staticmethod
+  @transaction.atomic
+  def select_winner(round_obj, submission_id, judge):
+    """Judge selects the winning submission"""
+    # Verify judge
+    if round_obj.judge.id != judge.id:
+      raise Exception("Only the judge can select winner")
 
-  # Get submission
-  submission = CardSubmission.objects.get(
-    id=submission_id,
-    round=round_obj
-  )
+    # Get submission
+    submission = CardSubmission.objects.get(
+      id=submission_id,
+      round=round_obj
+    )
 
-  # Mark as winner
-  round_obj.winning_submission = submission
-  round_obj.save()
+    # Mark as winner
+    round_obj.winning_submission = submission
+    round_obj.save()
 
-  # Award point
-  submission.player.score += 1
-  submission.player.save()
+    # Award point
+    submission.player.score += 1
+    submission.player.save()
 
-  # Check for game winner (e.g., first to 7 points)
-  if submission.player.score >= 7:
-    game = round_obj.game
-    game.winner = submission.player.user
-    game.save()
-    return game
+    # Check for game winner (e.g., first to 7 points)
+    if submission.player.score >= 7:
+      game = round_obj.game
+      game.winner = submission.player.user
+      game.save()
+      return game
 
-  return None  # Game continues
+    return None  # Game continues
