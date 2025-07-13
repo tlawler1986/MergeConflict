@@ -40,7 +40,7 @@ class Room(models.Model):
 
 class RoomMembership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='memberships')
     joined_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
@@ -66,8 +66,8 @@ class GamePlayer(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='players')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     score = models.IntegerField(default=0)
-    turn_order = models.IntegerField()
-    white_card_ids = models.JSONField(default=list)  # Store card IDs from API
+    turn_order = models.IntegerField(default=0)
+    card_hand = models.JSONField(default=list)  # Store full card objects
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -83,11 +83,11 @@ class Round(models.Model):
     
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='rounds')
     round_number = models.IntegerField()
-    black_card_id = models.CharField(max_length=50)  # API card ID
-    black_card_text = models.TextField()  # Cached card text
+    black_card = models.JSONField(default=dict)  # Full black card object
     judge = models.ForeignKey(User, on_delete=models.CASCADE, related_name='judged_rounds')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='card_selection')
     winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='won_rounds')
+    winning_submission = models.ForeignKey('CardSubmission', on_delete=models.SET_NULL, null=True, blank=True, related_name='won_round')
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
@@ -97,9 +97,8 @@ class Round(models.Model):
 
 class CardSubmission(models.Model):
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name='submissions')
-    player = models.ForeignKey(User, on_delete=models.CASCADE)
-    white_card_id = models.CharField(max_length=50)  # API card ID
-    white_card_text = models.TextField()  # Cached card text
+    player = models.ForeignKey(GamePlayer, on_delete=models.CASCADE)
+    white_cards = models.JSONField(default=list)  # List of white card objects
     is_winner = models.BooleanField(default=False)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
