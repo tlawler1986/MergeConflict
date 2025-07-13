@@ -1,6 +1,5 @@
 import requests
-from django.shortcuts import render
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import DetailView, ListView
 from django.contrib.auth import login
@@ -8,6 +7,10 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import SignUpForm, ProfileEditForm
+from .services import GameService
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .models import Room, Game, GamePlayer, CardSubmission
 
 # Create your views here.
 def home(request):
@@ -49,3 +52,175 @@ def edit_profile(request):
     else:
         form = ProfileEditForm(instance=request.user)
     return render(request, 'edit_profile.html', {'form': form})
+
+@login_required
+def start_game(request, room_code):
+    """Start a new game in the room"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+
+ # Only room creator can start game
+    if request.user != room.creator:
+        messages.error(request, "Only the room creator can start the game")
+        return redirect('room_detail', room_code=room_code)
+
+    # Check if enough players (minimum 3)
+    if room.memberships.filter(is_active=True).count() < 3:
+        messages.error(request, "Need at least 3 players to start")
+        return redirect('room_detail', room_code=room_code)
+
+    # Create and start the game
+    game = GameService.create_game(room)
+    GameService.start_game(game)
+    game.status = 'active'
+    game.save()
+
+    return redirect('game_play', room_code=room_code)
+
+@login_required
+def game_play(request, room_code):
+    """Main game interface"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+    game = get_object_or_404(Game, room=room)
+
+    # Get current player
+    try:
+        player = game.players.get(user=request.user)
+    except GamePlayer.DoesNotExist:
+        messages.error(request, "You are not in this game")
+        return redirect('room_list')
+
+    # Get current round
+    current_round = game.rounds.order_by('-round_number').first()
+
+    # Check if player already submitted
+    has_submitted = False
+    if current_round:
+        has_submitted = CardSubmission.objects.filter(
+            round=current_round,
+            player=player
+        ).exists()
+
+    # Get all submissions if in judging phase
+    submissions = []
+    if current_round and current_round.status == 'judging':
+        submissions = current_round.submissions.all()
+
+    context = {
+        'room': room,
+        'game': game,
+        'player': player,
+        'current_round': current_round,
+        'is_judge': current_round and current_round.judge == request.user,
+        'has_submitted': has_submitted,
+        'submissions': submissions,
+        'players': game.players.all(),
+    }
+
+    return render(request, 'main_app/game.html', context)
+
+@login_required
+@require_POST
+def submit_card(request, room_code):
+    """Player submits a white card"""
+    room = get_object_or_404(Room, room_code=room_code)
+    game = get_object_or_404(Game, room=room, status='active')
+    player = get_object_or_404(GamePlayer, game=game, user=request.user)
+
+    current_round = game.rounds.order_by('-round_number').first()
+    if not current_round or current_round.status != 'card_selection':
+        messages.error(request, "Cannot submit cards right now")
+        return redirect('game_play', room_code=room_code)
+
+    card_id = request.POST.get('card_id')
+    if not card_id:
+        messages.error(request, "Please select a card")
+        return redirect('game_play', room_code=room_code)
+
+    try:
+        GameService.submit_card(player, current_round, card_id)
+        messages.success(request, "Card submitted!")
+
+        # Check if all players submitted
+        expected_submissions = game.players.filter(is_active=True).exclude(
+            user=current_round.judge
+        ).count()
+        actual_submissions = current_round.submissions.count()
+
+        if actual_submissions >= expected_submissions:
+            # Move to judging phase
+            current_round.status = 'judging'
+            current_round.save()
+
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect('game_play', room_code=room_code)
+
+@login_required
+@require_POST
+def select_winner(request, room_code):
+    """Judge selects winning submission"""
+    room = get_object_or_404(Room, room_code=room_code)
+    game = get_object_or_404(Game, room=room, status='active')
+
+    current_round = game.rounds.order_by('-round_number').first()
+    if not current_round or current_round.status != 'judging':
+        messages.error(request, "Cannot judge right now")
+        return redirect('game_play', room_code=room_code)
+
+    if current_round.judge != request.user:
+        messages.error(request, "Only the judge can select a winner")
+        return redirect('game_play', room_code=room_code)
+
+    submission_id = request.POST.get('submission_id')
+    if not submission_id:
+        messages.error(request, "Please select a winner")
+        return redirect('game_play', room_code=room_code)
+
+    try:
+        judge_player = game.players.get(user=request.user)
+        game_winner = GameService.select_winner(
+            current_round,
+            submission_id,
+            judge_player
+        )
+
+        if game_winner:
+            # Game is over
+            messages.success(request, f"{game_winner.winner.username} wins the game!")
+            return redirect('room_detail', room_code=room_code)
+        else:
+            # Start next round
+            messages.success(request, "Round complete! Starting next round...")
+            GameService.create_round(game)
+
+    except Exception as e:
+        messages.error(request, str(e))
+
+    return redirect('game_play', room_code=room_code)
+
+def game_status(request, room_code):
+    """Get current game status for polling"""
+    room = get_object_or_404(Room, room_code=room_code)
+    game = get_object_or_404(Game, room=room)
+    current_round = game.rounds.order_by('-round_number').first()
+
+    # Count submissions
+    submissions_count = 0
+    if current_round:
+        submissions_count = current_round.submissions.count()
+
+    data = {
+        'game_status': game.status,
+        'round_status': current_round.status if current_round else None,
+        'round_number': current_round.round_number if current_round else 0,
+        'submissions_count': submissions_count,
+        'total_players': game.players.filter(is_active=True).count(),
+    }
+
+    return JsonResponse(data)
+
+
+
+
+
