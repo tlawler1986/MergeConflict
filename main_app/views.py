@@ -142,12 +142,12 @@ def start_game(request, room_code):
  # Only room creator can start game
     if request.user != room.creator:
         messages.error(request, "Only the room creator can start the game")
-        return redirect('room_detail', room_code=room_code)
+        return redirect('room', room_code=room_code)
 
     # Check if enough players (minimum 3)
     if room.memberships.filter(is_active=True).count() < 3:
         messages.error(request, "Need at least 3 players to start")
-        return redirect('room_detail', room_code=room_code)
+        return redirect('room', room_code=room_code)
 
     # Create and start the game
     game = GameService.create_game(room)
@@ -269,7 +269,7 @@ def select_winner(request, room_code):
         if game_winner:
             # Game is over
             messages.success(request, f"{game_winner.winner.username} wins the game!")
-            return redirect('room_detail', room_code=room_code)
+            return redirect('room', room_code=room_code)
         else:
             # Start next round
             messages.success(request, "Round complete! Starting next round...")
