@@ -29,9 +29,16 @@ def dashboard(request):
     # Handle room creation if POST
     if request.method == 'POST':
         room_name = request.POST.get('room_name', 'New Room')
+        max_players = int(request.POST.get('max-players', 8))
+        round_limit = int(request.POST.get('round-limit', 10))
+        turn_timer = int(request.POST.get('turn-timer', 3)) * 60  # Convert minutes to seconds
+        
         room = Room.objects.create(
             name=room_name,
-            creator=request.user
+            creator=request.user,
+            max_players=max_players,
+            round_limit=round_limit,
+            turn_time_limit=turn_timer
         )
         # Add creator as member
         RoomMembership.objects.create(
