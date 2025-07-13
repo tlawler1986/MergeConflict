@@ -43,7 +43,7 @@ def dashboard(request):
     context = {
         'user_rooms': user_rooms,
     }
-    return render(request, 'room.html', context)
+    return render(request, 'dashboard.html', context)
 
 @login_required
 def room(request, room_code):
@@ -64,7 +64,7 @@ def room(request, room_code):
         'is_creator': room.creator == request.user,
     }
     
-    return render(request, 'lobby.html', context)
+    return render(request, 'game-lobby.html', context)
 
 class Login(LoginView):
     template_name = 'registration/login.html'
@@ -162,7 +162,7 @@ def game_play(request, room_code):
         'players': game.players.all(),
     }
 
-    return render(request, 'main_app/game.html', context)
+    return render(request, 'game-play.html', context)
 
 @login_required
 @require_POST

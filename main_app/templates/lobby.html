@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Conflict - Game Lobby</title>
-    <style>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ room.name }} - Game Lobby{% endblock %}
+
+{% block extra_css %}
+<style>
         /* Kay-who-codes base CSS */
         * {
           margin: 0;
@@ -250,18 +250,20 @@
             letter-spacing: 2px;
           }
         }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <div class="header-bar">
-        <div class="logo">Merge Conflict</div>
-        <div>
-            <span style="margin-right: 20px;">Welcome, CodeMaster!</span>
-            <a href="#" class="header-link">Dashboard</a>
-            <a href="#" class="header-link">Logout</a>
-        </div>
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="header-bar">
+    <a href="{% url 'home' %}" class="logo" style="text-decoration: none; color: white;">Merge Conflict</a>
+    <div>
+        <span style="margin-right: 20px;">Welcome, {{ user.username }}!</span>
+        <a href="{% url 'dashboard' %}" class="header-link">Dashboard</a>
+        <a href="{% url 'edit_profile' %}" class="header-link">My Profile</a>
+        <a href="{% url 'account_logout' %}" class="header-link">Logout</a>
     </div>
+</div>
 
     <!-- Lobby Content -->
     <div class="lobby-container">
@@ -269,44 +271,40 @@
         
         <!-- Room Information -->
         <div class="room-info">
-            <h2>Debug Party Extraordinaire</h2>
-            <div class="room-code-display">DEV456</div>
+            <h2>{{ room.name }}</h2>
+            <div class="room-code-display">{{ room.room_code }}</div>
             <p class="share-info">Share this code with friends to join the game</p>
         </div>
 
         <!-- Status Message -->
         <div class="status-message">
-            Waiting for players to join... Need at least 3 players to start the game.
+            {% if player_count < 3 %}
+                Waiting for players to join... Need at least 3 players to start the game. (Currently {{ player_count }} player{{ player_count|pluralize }})
+            {% else %}
+                Ready to start! {{ player_count }} players in the room.
+            {% endif %}
         </div>
 
         <!-- Main Lobby Content -->
         <div class="lobby-content">
             <!-- Players Section -->
             <div class="players-section">
-                <h2>Players (4/8)</h2>
+                <h2>Players ({{ player_count }}/{{ room.max_players }})</h2>
                 <div class="player-list">
-                    <div class="player-card host">
-                        <div class="player-name">CodeMaster</div>
-                        <div class="player-status">Room Creator • Ready</div>
+                    {% for membership in players %}
+                    <div class="player-card {% if membership.user == room.creator %}host{% endif %}">
+                        <div class="player-name">{{ membership.user.username }}</div>
+                        <div class="player-status">
+                            {% if membership.user == room.creator %}Room Creator • {% endif %}Ready
+                        </div>
+                        {% if is_creator and membership.user != request.user %}
+                        <form method="post" action="{% url 'kick_player' room.room_code membership.user.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="kick-button">Kick</button>
+                        </form>
+                        {% endif %}
                     </div>
-                    
-                    <div class="player-card">
-                        <div class="player-name">BugHunter23</div>
-                        <div class="player-status">Ready</div>
-                        <button class="kick-button" onclick="kickPlayer('BugHunter23')">Kick</button>
-                    </div>
-                    
-                    <div class="player-card">
-                        <div class="player-name">GitGuru</div>
-                        <div class="player-status">Ready</div>
-                        <button class="kick-button" onclick="kickPlayer('GitGuru')">Kick</button>
-                    </div>
-                    
-                    <div class="player-card">
-                        <div class="player-name">StackOverflowHero</div>
-                        <div class="player-status">Just joined...</div>
-                        <button class="kick-button" onclick="kickPlayer('StackOverflowHero')">Kick</button>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -315,15 +313,15 @@
                 <h2>Game Settings</h2>
                 <div class="settings-item">
                     <span>Max Players:</span>
-                    <span class="settings-value">8</span>
+                    <span class="settings-value">{{ room.max_players }}</span>
                 </div>
                 <div class="settings-item">
                     <span>Rounds to Play:</span>
-                    <span class="settings-value">10</span>
+                    <span class="settings-value">{{ room.round_limit }}</span>
                 </div>
                 <div class="settings-item">
                     <span>Turn Timer:</span>
-                    <span class="settings-value">3 minutes</span>
+                    <span class="settings-value">{{ room.turn_time_limit }} seconds</span>
                 </div>
                 <div class="settings-item">
                     <span>Room Status:</span>
@@ -334,61 +332,27 @@
 
         <!-- Game Controls -->
         <div class="game-controls">
-            <button class="action-button start-button" onclick="startGame()" id="start-btn">
-                Start Game
-            </button>
-            <button class="action-button leave-button" onclick="leaveRoom()">
+            {% if is_creator %}
+                <form method="post" action="{% url 'start_game' room.room_code %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="action-button start-button" id="start-btn" 
+                            {% if player_count < 3 %}disabled{% endif %}>
+                        Start Game
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{% url 'dashboard' %}" class="action-button leave-button" style="text-decoration: none; display: inline-block; text-align: center;">
                 Leave Room
-            </button>
+            </a>
         </div>
     </div>
+{% endblock %}
 
-    <script>
-        let playerCount = 4;
-        
-        function startGame() {
-            if (playerCount >= 3) {
-                alert('Starting game with ' + playerCount + ' players!');
-                // In Django, this would redirect to the game interface
-            } else {
-                alert('Need at least 3 players to start the game');
-            }
-        }
-        
-        function kickPlayer(playerName) {
-            if (confirm(`Kick ${playerName} from the room?`)) {
-                alert(`${playerName} has been kicked from the room`);
-                playerCount--;
-                updateGameStatus();
-                // In Django, this would remove the player from RoomMembership
-            }
-        }
-        
-        function leaveRoom() {
-            if (confirm('Are you sure you want to leave this room?')) {
-                alert('Leaving room...');
-                // In Django, this would redirect back to dashboard
-            }
-        }
-        
-        function updateGameStatus() {
-            const startBtn = document.getElementById('start-btn');
-            const statusMsg = document.querySelector('.status-message');
-            
-            if (playerCount < 3) {
-                startBtn.disabled = true;
-                statusMsg.textContent = `Waiting for players to join... Need at least 3 players to start the game. (Currently ${playerCount} players)`;
-            } else {
-                startBtn.disabled = false;
-                statusMsg.textContent = `Ready to start! ${playerCount} players in the room.`;
-                statusMsg.style.backgroundColor = '#d4edda';
-                statusMsg.style.borderColor = '#c3e6cb';
-                statusMsg.style.color = '#155724';
-            }
-        }
-        
-        // Simulate players joining/leaving
-        updateGameStatus();
-    </script>
-</body>
-</html>
+{% block extra_js %}
+<script>
+    // Refresh the page periodically to see new players join
+    setTimeout(function() {
+        location.reload();
+    }, 5000); // Refresh every 5 seconds
+</script>
+{% endblock %}
