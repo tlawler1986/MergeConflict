@@ -17,8 +17,23 @@ def home(request):
   return render(request, 'home.html')
 
 @login_required
-def room(request):
-  return render(request, 'room.html')
+def room(request, room_code):
+    """Display room details with Start Game button for creator"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+    
+    # Check if user is a member of this room
+    if not room.memberships.filter(user=request.user, is_active=True).exists():
+        messages.error(request, "You are not a member of this room")
+        return redirect('home')
+    
+    player_count = room.memberships.filter(is_active=True).count()
+    
+    context = {
+        'room': room,
+        'player_count': player_count,
+    }
+    
+    return render(request, 'main_app/room.html', context)
 
 class Login(LoginView):
     template_name = 'registration/login.html'

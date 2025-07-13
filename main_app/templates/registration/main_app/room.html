@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="room-container">
+    <h1>Room: {{ room.name }}</h1>
+    <p>Room Code: <strong>{{ room.room_code }}</strong></p>
+    
+    <div class="room-info">
+        <h2>Room Settings</h2>
+        <ul>
+            <li>Max Players: {{ room.max_players }}</li>
+            <li>Round Limit: {{ room.round_limit }}</li>
+            <li>Status: {{ room.get_status_display }}</li>
+        </ul>
+    </div>
+
+    <div class="players-section">
+        <h2>Players ({{ player_count }}/{{ room.max_players }})</h2>
+        <ul class="players-list">
+            {% for membership in room.memberships.all %}
+                {% if membership.is_active %}
+                <li>
+                    {{ membership.user.username }}
+                    {% if membership.user == room.creator %}
+                        <span class="creator-badge">(Room Creator)</span>
+                    {% endif %}
+                </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if user == room.creator and player_count >= 3 %}
+        <div class="start-game-section">
+            <form method="post" action="{% url 'start_game' room.room_code %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-large">Start Game</button>
+            </form>
+        </div>
+    {% elif user == room.creator and player_count < 3 %}
+        <div class="waiting-message">
+            <p>Waiting for more players... (Need at least 3 players to start)</p>
+        </div>
+    {% elif user != room.creator %}
+        <div class="waiting-message">
+            <p>Waiting for the room creator to start the game...</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.room-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.room-info {
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.players-section {
+    margin: 20px 0;
+}
+
+.players-list {
+    list-style: none;
+    padding: 0;
+}
+
+.players-list li {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    margin: 5px 0;
+    border-radius: 5px;
+}
+
+.creator-badge {
+    background-color: #FFD700;
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+.start-game-section {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.btn-large {
+    padding: 15px 40px;
+    font-size: 1.2em;
+}
+
+.waiting-message {
+    text-align: center;
+    font-size: 1.1em;
+    color: #666;
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}
