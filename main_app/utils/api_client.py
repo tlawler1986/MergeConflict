@@ -38,8 +38,9 @@ class CardsAPIClient:
     if packs is None:
       packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
     
-    # Create cache key from pack names
-    cache_key = f"cards_{'_'.join(sorted(packs))}"
+    # Create cache key from pack names (sanitize for memcached compatibility)
+    pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
+    cache_key = f"cards_{pack_string}"
     cards = cache.get(cache_key)
     
     if not cards:
@@ -66,8 +67,9 @@ class CardsAPIClient:
     if packs is None:
       packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
     
-    # Check if we have cached black cards
-    cache_key = f"black_cards_pool_{'_'.join(sorted(packs))}"
+    # Check if we have cached black cards (sanitize for memcached compatibility)
+    pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
+    cache_key = f"black_cards_pool_{pack_string}"
     black_cards_pool = cache.get(cache_key)
     
     if not black_cards_pool:
@@ -88,8 +90,9 @@ class CardsAPIClient:
     if packs is None:
       packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
     
-    # Check if we have cached white cards
-    cache_key = f"white_cards_pool_{'_'.join(sorted(packs))}"
+    # Check if we have cached white cards (sanitize for memcached compatibility)
+    pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
+    cache_key = f"white_cards_pool_{pack_string}"
     white_cards_pool = cache.get(cache_key)
     
     if not white_cards_pool:

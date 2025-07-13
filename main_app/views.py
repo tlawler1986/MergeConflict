@@ -245,9 +245,9 @@ def game_play(request, room_code):
             player=player
         ).exists()
 
-    # Get all submissions if in judging phase
+    # Get all submissions
     submissions = []
-    if current_round and current_round.status == 'judging':
+    if current_round:
         submissions = current_round.submissions.all()
 
     context = {
@@ -256,6 +256,7 @@ def game_play(request, room_code):
         'player': player,
         'current_round': current_round,
         'is_judge': current_round and current_round.judge == request.user,
+        'is_creator': room.creator == request.user,
         'has_submitted': has_submitted,
         'submissions': submissions,
         'players': game.players.all(),
