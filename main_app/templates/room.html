@@ -397,6 +397,15 @@
             </div>
         </div>
 
+        {% if user == room.creator and room.memberships.count >= 3 %}
+            <form method="post" action="{% url 'start_game' room.room_code %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Start Game</button>
+            </form>
+        {% endif %}
+
+
+
         <!-- Pack Selection Section -->
         <div class="pack-section">
             <h2>Select Card Packs</h2>
@@ -438,7 +447,7 @@
                 </button>
             </form>
             
-            <!-- Recent Rooms -->
+            <!-- Recent Rooms
             <div style="margin-top: 30px;">
                 <h3 style="margin-bottom: 15px; color: #333;">Recent Rooms</h3>
                 <div style="text-align: left;">
@@ -451,7 +460,7 @@
                         <span style="font-family: 'Courier New', monospace;">GIT789</span> • 2/6 players
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 
