@@ -46,6 +46,34 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 @login_required
+def join_room(request):
+    """Join an existing room by code"""
+    if request.method == 'POST':
+        room_code = request.POST.get('room_code', '').upper()
+        
+        try:
+            room = Room.objects.get(room_code=room_code, is_active=True)
+            
+            # Check if already a member
+            if room.memberships.filter(user=request.user, is_active=True).exists():
+                messages.info(request, "You are already a member of this room")
+            else:
+                # Add user to room
+                RoomMembership.objects.create(
+                    user=request.user,
+                    room=room
+                )
+                messages.success(request, f"Successfully joined {room.name}!")
+            
+            return redirect('room', room_code=room.room_code)
+            
+        except Room.DoesNotExist:
+            messages.error(request, "Invalid room code. Please check and try again.")
+            return redirect('dashboard')
+    
+    return redirect('dashboard')
+
+@login_required
 def room(request, room_code):
     """Display room details with Start Game button for creator"""
     room = get_object_or_404(Room, room_code=room_code, is_active=True)
