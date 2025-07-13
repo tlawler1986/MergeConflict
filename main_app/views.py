@@ -122,13 +122,63 @@ def signup(request):
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
+        # Store the original email before form processing
+        original_email = request.user.email
+        
         form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
+            # Check if email is being changed BEFORE saving
+            new_email = form.cleaned_data.get('email')
+            
             user = form.save(commit=False)
+            
+            if new_email and new_email != original_email:
+                # Don't update email in User model yet - let allauth handle it
+                user.email = original_email  # Keep old email for now
+                
+                # Use allauth's email management
+                from allauth.account.models import EmailAddress
+                
+                try:
+                    # First, check if this email already exists for ANY user
+                    existing = EmailAddress.objects.filter(email__iexact=new_email).first()
+                    if existing:
+                        if existing.user == request.user:
+                            if existing.verified:
+                                # This email is already verified for this user
+                                messages.info(request, f'{new_email} is already verified. Making it your primary email.')
+                                EmailAddress.objects.filter(user=request.user, primary=True).update(primary=False)
+                                existing.set_as_primary()
+                                user.email = new_email
+                            else:
+                                # Resend verification
+                                existing.send_confirmation(request)
+                                messages.info(request, f'A verification email has been sent to {new_email}. Please check your email to confirm the change.')
+                        else:
+                            messages.error(request, f'The email {new_email} is already in use by another account.')
+                    else:
+                        # Add the new email address
+                        email_address = EmailAddress.objects.add_email(
+                            request,
+                            request.user,
+                            new_email,
+                            confirm=True  # This sends the confirmation email
+                        )
+                        
+                        if email_address:
+                            messages.info(request, f'A verification email has been sent to {new_email}. Please check your email to confirm the change.')
+                        else:
+                            messages.error(request, 'Could not add email address. It may already be in use.')
+                except Exception as e:
+                    messages.error(request, f'Error adding email: {str(e)}')
+            
             if 'avatar' in request.FILES:
                 user.avatar_url = request.FILES['avatar']
             user.save()
-            messages.success(request, 'Profile updated successfully!')
+            
+            if new_email == original_email:
+                messages.success(request, 'Profile updated successfully!')
+            
             return redirect('edit_profile')
     else:
         form = ProfileEditForm(instance=request.user)
@@ -345,6 +395,55 @@ def game_status(request, room_code):
 
     return JsonResponse(data)
 
+@login_required
+def change_password(request):
+    """Allow users to change their password"""
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Check current password is correct
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect')
+        elif new_password != confirm_password:
+            messages.error(request, 'New passwords do not match')
+        elif len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long')
+        else:
+            # Set new password
+            request.user.set_password(new_password)
+            request.user.save()
+            # Keep user logged in after password change
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('edit_profile')
+    
+    return render(request, 'change_password.html')
+
+@login_required
+def delete_account_confirm(request):
+    """Show confirmation page for account deletion"""
+    return render(request, 'delete_account_confirm.html')
+
+@login_required
+@require_POST
+def delete_account(request):
+    """Delete user account"""
+    # Verify password before deletion
+    password = request.POST.get('password')
+    
+    if request.user.check_password(password):
+        # Deactivate all room memberships
+        request.user.room_memberships.update(is_active=False)
+        # Delete the user
+        request.user.delete()
+        messages.success(request, 'Your account has been deleted.')
+        return redirect('home')
+    else:
+        messages.error(request, 'Incorrect password. Account not deleted.')
+        return redirect('edit_profile')
 
 
 
