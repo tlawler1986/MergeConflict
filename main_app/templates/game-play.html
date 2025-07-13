@@ -1,0 +1,536 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Override base.html styles for game page */
+    body {
+        background-color: #2c2c2c;
+        color: white;
+    }
+
+    /* Game Layout */
+    .game-container {
+        display: grid;
+        grid-template-areas: 
+            "scoreboard scoreboard"
+            "black-card submissions"
+            "hand hand";
+        grid-template-rows: auto 1fr auto;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+        height: calc(100vh - 80px);
+    }
+
+    /* Scoreboard */
+    .scoreboard {
+        grid-area: scoreboard;
+        background-color: #3a3a3a;
+        border: 2px solid #555;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .game-info {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+    }
+
+    .round-info {
+        text-align: center;
+    }
+
+    .round-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ffd700;
+    }
+
+    .current-judge {
+        font-size: 16px;
+        color: #87ceeb;
+    }
+
+    .players-scores {
+        display: flex;
+        gap: 20px;
+    }
+
+    .player-score {
+        text-align: center;
+        padding: 8px 12px;
+        background-color: #4a4a4a;
+        border-radius: 5px;
+        min-width: 80px;
+    }
+
+    .player-score.current-judge {
+        background-color: #ffd700;
+        color: black;
+    }
+
+    .player-score.current-user {
+        border: 2px solid #87ceeb;
+    }
+
+    .player-name {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .score {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    /* Black Card Area */
+    .black-card-area {
+        grid-area: black-card;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .black-card {
+        width: 250px;
+        height: 350px;
+        background-color: black;
+        color: white;
+        border: 3px solid #666;
+        border-radius: 12px;
+        padding: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        display: flex;
+        align-items: flex-start;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+
+    .turn-timer {
+        background-color: #ff6b6b;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    /* Submissions Area */
+    .submissions-area {
+        grid-area: submissions;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .submissions-title {
+        font-size: 18px;
+        margin-bottom: 20px;
+        color: #ccc;
+    }
+
+    .submitted-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+        max-height: 400px;
+        overflow-y: auto;
+        padding-top: 15px;
+    }
+
+    .submitted-card {
+        width: 180px;
+        height: 250px;
+        background-color: white;
+        color: black;
+        border: 3px solid #333;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        align-items: flex-start;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .submitted-card:hover {
+        transform: translateY(-10px);
+        border-color: #007acc;
+    }
+
+    .submitted-card.selected {
+        border-color: #28a745;
+        border-width: 4px;
+    }
+
+    /* Player Hand */
+    .player-hand {
+        grid-area: hand;
+        background-color: #3a3a3a;
+        border: 2px solid #555;
+        border-radius: 10px;
+        padding: 15px;
+    }
+
+    .hand-title {
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #ccc;
+    }
+
+    .hand-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-start;
+        padding-bottom: 10px;
+    }
+
+    .hand-card {
+        width: 180px;
+        height: 250px;
+        background-color: white;
+        color: black;
+        border: 3px solid #333;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        align-items: flex-start;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+        overflow: hidden;
+    }
+
+    .hand-card:hover {
+        transform: translateY(-10px);
+        border-color: #007acc;
+    }
+
+    .hand-card.selected {
+        border-color: #28a745;
+        border-width: 4px;
+        transform: translateY(-15px);
+    }
+
+    /* Action Buttons */
+    .action-button {
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        margin: 10px;
+        cursor: pointer;
+        border: 2px solid;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+        background-color: #28a745;
+        color: white;
+        border-color: #28a745;
+    }
+
+    .action-button:hover {
+        transform: scale(1.05);
+    }
+
+    .action-button:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Game Status */
+    .game-status {
+        background-color: #007acc;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    /* Waiting state */
+    .waiting-placeholder {
+        color: #666;
+        font-style: italic;
+        align-self: center;
+        text-align: center;
+        padding: 20px;
+    }
+
+    /* Host Controls */
+    .host-controls {
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        background-color: #4a4a4a;
+        border: 2px solid #666;
+        border-radius: 8px;
+        padding: 15px;
+        display: none;
+    }
+
+    .host-controls.show {
+        display: block;
+    }
+
+    @media (max-width: 1024px) {
+        .game-container {
+            grid-template-areas: 
+                "scoreboard"
+                "black-card"
+                "submissions"
+                "hand";
+            grid-template-columns: 1fr;
+        }
+        
+        .black-card, .submitted-card {
+            width: 200px;
+            height: 280px;
+        }
+        
+        .hand-card {
+            min-width: 120px;
+            height: 160px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<!-- Host Controls (Hidden by default) -->
+{% if is_creator %}
+<div class="host-controls" id="host-controls">
+    <h4 style="margin-bottom: 15px;">Host Controls</h4>
+    <form method="post" action="{% url 'room' room.room_code %}">
+        {% csrf_token %}
+        <button type="submit" class="action-button" style="background-color: #dc3545; border-color: #dc3545;">
+            End Game Early
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Game Container -->
+<div class="game-container">
+    <!-- Scoreboard -->
+    <div class="scoreboard">
+        <div class="game-info">
+            <div class="round-info">
+                <div class="round-number">Round {{ current_round.round_number }}/{{ room.round_limit }}</div>
+                <div class="current-judge">Judge: {{ current_round.judge.username }}</div>
+            </div>
+            <div class="turn-timer">⏰ {% widthratio room.turn_time_limit 60 1 %}:00</div>
+        </div>
+        
+        <div class="players-scores">
+            {% for game_player in players %}
+            <div class="player-score {% if current_round.judge == game_player.user %}current-judge{% endif %} {% if game_player.user == request.user %}current-user{% endif %}">
+                <div class="player-name">{{ game_player.user.username }}{% if game_player.user == request.user %} (You){% endif %}</div>
+                <div class="score">{{ game_player.score }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Black Card Area -->
+    <div class="black-card-area">
+        <div class="black-card">
+            {% if current_round and current_round.black_card %}
+                {{ current_round.black_card.text|default:"Loading..." }}
+            {% else %}
+                No black card available
+            {% endif %}
+        </div>
+        <div style="text-align: center;">
+            <p style="color: #ccc; margin-bottom: 10px;">{{ current_round.judge.username }} is the judge this round</p>
+            <div class="game-status">
+                {% if current_round.status == 'card_selection' %}
+                    Waiting for players to submit cards...
+                {% elif current_round.status == 'judging' %}
+                    Judge is selecting winner...
+                {% else %}
+                    Round complete!
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions Area -->
+    <div class="submissions-area">
+        <div class="submissions-title">
+            {% if current_round.status == 'card_selection' %}
+                Submitted Cards ({{ submissions|length }}/{{ players|length|add:"-1" }} players)
+            {% else %}
+                Submitted Cards
+            {% endif %}
+        </div>
+        <div class="submitted-cards">
+            {% if current_round.status == 'judging' and submissions %}
+                {% for submission in submissions %}
+                    <div class="submitted-card" onclick="{% if is_judge %}selectWinner({{ submission.id }}){% endif %}">
+                        {% for card in submission.white_cards %}
+                            {{ card.text }}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            {% elif current_round.status == 'card_selection' %}
+                {% for submission in submissions %}
+                    <div class="submitted-card" style="background-color: #666; color: #ccc;">
+                        Card submitted
+                    </div>
+                {% endfor %}
+                {% if submissions|length < players|length|add:"-1" %}
+                    <div class="waiting-placeholder">
+                        Waiting for more submissions...
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Player Hand -->
+    <div class="player-hand">
+        {% if not is_judge %}
+            <div class="hand-title">Your Hand (Click a card to play it)</div>
+            <form id="card-form" method="post" action="{% url 'submit_card' room.room_code %}">
+                {% csrf_token %}
+                <input type="hidden" id="card_id" name="card_id" value="">
+                <div class="hand-cards">
+                    {% for card in player.card_hand %}
+                        <div class="hand-card" onclick="submitCard('{{ card.id }}')">
+                            {{ card.text }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </form>
+        {% else %}
+            <div class="hand-title">You are the judge this round</div>
+            <div style="text-align: center; color: #ccc; padding: 20px;">
+                Wait for all players to submit their cards, then select the funniest one!
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Store current round status
+let currentRoundStatus = "{{ current_round.status }}";
+let currentRoundNumber = {{ current_round.round_number|default:0 }};
+let isJudge = {{ is_judge|lower }};
+let selectedCardId = null;
+
+// Only start polling if not judging or not the judge
+if (!(isJudge && currentRoundStatus === 'judging')) {
+    // Poll for game status updates every 3 seconds
+    const statusChecker = setInterval(function() {
+        fetch("{% url 'game_status' room.room_code %}")
+            .then(response => response.json())
+            .then(data => {
+                console.log('Status check:', data);
+                // Only reload if something actually changed
+                if (data.round_status !== currentRoundStatus || 
+                    data.round_number !== currentRoundNumber) {
+                    console.log('Reloading: status or round changed');
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Status check failed:', error);
+            });
+    }, 3000);
+} else {
+    console.log('Judge in judging phase - auto-refresh disabled');
+}
+
+// Function to submit card (instant submission on click)
+function submitCard(cardId) {
+    console.log('Submitting card with ID:', cardId);
+    
+    // Show loading state
+    document.querySelectorAll('.hand-card').forEach(card => {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+    });
+    
+    // Set the hidden input value
+    document.getElementById('card_id').value = cardId;
+    
+    // Submit the form immediately
+    document.getElementById('card-form').submit();
+}
+
+// Function to select winner (for judges)
+function selectWinner(submissionId) {
+    console.log('Selecting winner with submission ID:', submissionId);
+    
+    // Show loading state
+    document.querySelectorAll('.submitted-card').forEach(card => {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+    });
+    
+    // Update game status to show loading
+    const statusElement = document.querySelector('.game-status');
+    if (statusElement) {
+        statusElement.textContent = 'Selecting winner...';
+        statusElement.style.backgroundColor = '#ffd700';
+        statusElement.style.color = '#000';
+    }
+    
+    // Create a form and submit it
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% url 'select_winner' room.room_code %}";
+    
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    form.appendChild(csrfInput);
+    
+    const submissionInput = document.createElement('input');
+    submissionInput.type = 'hidden';
+    submissionInput.name = 'submission_id';
+    submissionInput.value = submissionId;
+    form.appendChild(submissionInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Toggle host controls
+function toggleHostControls() {
+    const controls = document.getElementById('host-controls');
+    if (controls) {
+        controls.classList.toggle('show');
+    }
+}
+
+// Add host controls link handler
+document.addEventListener('DOMContentLoaded', function() {
+    {% if is_creator %}
+    // Add host controls toggle to navigation
+    const navLinks = document.querySelector('.navbar-nav.ms-auto');
+    if (navLinks) {
+        const hostLink = document.createElement('li');
+        hostLink.className = 'nav-item';
+        hostLink.innerHTML = '<a class="nav-link" href="#" onclick="toggleHostControls(); return false;">⚙️ Host Controls</a>';
+        navLinks.insertBefore(hostLink, navLinks.firstChild);
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

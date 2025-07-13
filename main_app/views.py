@@ -29,9 +29,16 @@ def dashboard(request):
     # Handle room creation if POST
     if request.method == 'POST':
         room_name = request.POST.get('room_name', 'New Room')
+        max_players = int(request.POST.get('max-players', 8))
+        round_limit = int(request.POST.get('round-limit', 10))
+        turn_timer = int(request.POST.get('turn-timer', 3)) * 60  # Convert minutes to seconds
+        
         room = Room.objects.create(
             name=room_name,
-            creator=request.user
+            creator=request.user,
+            max_players=max_players,
+            round_limit=round_limit,
+            turn_time_limit=turn_timer
         )
         # Add creator as member
         RoomMembership.objects.create(
@@ -43,7 +50,35 @@ def dashboard(request):
     context = {
         'user_rooms': user_rooms,
     }
-    return render(request, 'room.html', context)
+    return render(request, 'dashboard.html', context)
+
+@login_required
+def join_room(request):
+    """Join an existing room by code"""
+    if request.method == 'POST':
+        room_code = request.POST.get('room_code', '').upper()
+        
+        try:
+            room = Room.objects.get(room_code=room_code, is_active=True)
+            
+            # Check if already a member
+            if room.memberships.filter(user=request.user, is_active=True).exists():
+                messages.info(request, "You are already a member of this room")
+            else:
+                # Add user to room
+                RoomMembership.objects.create(
+                    user=request.user,
+                    room=room
+                )
+                messages.success(request, f"Successfully joined {room.name}!")
+            
+            return redirect('room', room_code=room.room_code)
+            
+        except Room.DoesNotExist:
+            messages.error(request, "Invalid room code. Please check and try again.")
+            return redirect('dashboard')
+    
+    return redirect('dashboard')
 
 @login_required
 def room(request, room_code):
@@ -64,7 +99,7 @@ def room(request, room_code):
         'is_creator': room.creator == request.user,
     }
     
-    return render(request, 'lobby.html', context)
+    return render(request, 'game-lobby.html', context)
 
 class Login(LoginView):
     template_name = 'registration/login.html'
@@ -87,13 +122,63 @@ def signup(request):
 @login_required
 def edit_profile(request):
     if request.method == 'POST':
+        # Store the original email before form processing
+        original_email = request.user.email
+        
         form = ProfileEditForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
+            # Check if email is being changed BEFORE saving
+            new_email = form.cleaned_data.get('email')
+            
             user = form.save(commit=False)
+            
+            if new_email and new_email != original_email:
+                # Don't update email in User model yet - let allauth handle it
+                user.email = original_email  # Keep old email for now
+                
+                # Use allauth's email management
+                from allauth.account.models import EmailAddress
+                
+                try:
+                    # First, check if this email already exists for ANY user
+                    existing = EmailAddress.objects.filter(email__iexact=new_email).first()
+                    if existing:
+                        if existing.user == request.user:
+                            if existing.verified:
+                                # This email is already verified for this user
+                                messages.info(request, f'{new_email} is already verified. Making it your primary email.')
+                                EmailAddress.objects.filter(user=request.user, primary=True).update(primary=False)
+                                existing.set_as_primary()
+                                user.email = new_email
+                            else:
+                                # Resend verification
+                                existing.send_confirmation(request)
+                                messages.info(request, f'A verification email has been sent to {new_email}. Please check your email to confirm the change.')
+                        else:
+                            messages.error(request, f'The email {new_email} is already in use by another account.')
+                    else:
+                        # Add the new email address
+                        email_address = EmailAddress.objects.add_email(
+                            request,
+                            request.user,
+                            new_email,
+                            confirm=True  # This sends the confirmation email
+                        )
+                        
+                        if email_address:
+                            messages.info(request, f'A verification email has been sent to {new_email}. Please check your email to confirm the change.')
+                        else:
+                            messages.error(request, 'Could not add email address. It may already be in use.')
+                except Exception as e:
+                    messages.error(request, f'Error adding email: {str(e)}')
+            
             if 'avatar' in request.FILES:
                 user.avatar_url = request.FILES['avatar']
             user.save()
-            messages.success(request, 'Profile updated successfully!')
+            
+            if new_email == original_email:
+                messages.success(request, 'Profile updated successfully!')
+            
             return redirect('edit_profile')
     else:
         form = ProfileEditForm(instance=request.user)
@@ -107,15 +192,29 @@ def start_game(request, room_code):
  # Only room creator can start game
     if request.user != room.creator:
         messages.error(request, "Only the room creator can start the game")
-        return redirect('room_detail', room_code=room_code)
+        return redirect('room', room_code=room_code)
 
-    # Check if enough players (minimum 3)
-    if room.memberships.filter(is_active=True).count() < 3:
-        messages.error(request, "Need at least 3 players to start")
-        return redirect('room_detail', room_code=room_code)
+    # Check if enough players (minimum 2)
+    if room.memberships.filter(is_active=True).count() < 2:
+        messages.error(request, "Need at least 2 players to start")
+        return redirect('room', room_code=room_code)
 
-    # Create and start the game
-    game = GameService.create_game(room)
+    # Check if a game already exists for this room
+    try:
+        game = room.game
+        if game.status == 'active':
+            # Game is already active, redirect to it
+            messages.info(request, "Game is already in progress")
+            return redirect('game_play', room_code=room_code)
+        elif game.status == 'ended':
+            # Previous game ended, delete it and create new one
+            game.delete()
+            game = GameService.create_game(room)
+    except Game.DoesNotExist:
+        # No game exists, create one
+        game = GameService.create_game(room)
+    
+    # Start the game
     GameService.start_game(game)
     game.status = 'active'
     game.save()
@@ -146,9 +245,9 @@ def game_play(request, room_code):
             player=player
         ).exists()
 
-    # Get all submissions if in judging phase
+    # Get all submissions
     submissions = []
-    if current_round and current_round.status == 'judging':
+    if current_round:
         submissions = current_round.submissions.all()
 
     context = {
@@ -157,12 +256,13 @@ def game_play(request, room_code):
         'player': player,
         'current_round': current_round,
         'is_judge': current_round and current_round.judge == request.user,
+        'is_creator': room.creator == request.user,
         'has_submitted': has_submitted,
         'submissions': submissions,
         'players': game.players.all(),
     }
 
-    return render(request, 'main_app/game.html', context)
+    return render(request, 'game-play.html', context)
 
 @login_required
 @require_POST
@@ -224,6 +324,9 @@ def select_winner(request, room_code):
         return redirect('game_play', room_code=room_code)
 
     try:
+        # Debug logging
+        print(f"DEBUG select_winner: submission_id={submission_id}, type={type(submission_id)}")
+        
         judge_player = game.players.get(user=request.user)
         game_winner = GameService.select_winner(
             current_round,
@@ -234,16 +337,65 @@ def select_winner(request, room_code):
         if game_winner:
             # Game is over
             messages.success(request, f"{game_winner.winner.username} wins the game!")
-            return redirect('room_detail', room_code=room_code)
+            return redirect('room', room_code=room_code)
         else:
             # Start next round
             messages.success(request, "Round complete! Starting next round...")
             GameService.create_round(game)
 
+    except GamePlayer.DoesNotExist:
+        messages.error(request, "Judge player not found")
     except Exception as e:
-        messages.error(request, str(e))
+        print(f"DEBUG select_winner error: {e}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Error selecting winner: {str(e)}")
 
     return redirect('game_play', room_code=room_code)
+
+@login_required
+@require_POST
+def kick_player(request, room_code, user_id):
+    """Room creator can kick players from the room"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+    
+    # Only room creator can kick players
+    if request.user != room.creator:
+        messages.error(request, "Only the room creator can kick players")
+        return redirect('room', room_code=room_code)
+    
+    # Can't kick yourself
+    if user_id == request.user.id:
+        messages.error(request, "You cannot kick yourself from the room")
+        return redirect('room', room_code=room_code)
+    
+    # Find the membership to deactivate
+    try:
+        membership = RoomMembership.objects.get(
+            room=room,
+            user_id=user_id,
+            is_active=True
+        )
+        membership.is_active = False
+        membership.save()
+        
+        # Also deactivate them from any active game
+        active_game = room.games.filter(status='active').first()
+        if active_game:
+            try:
+                game_player = active_game.players.get(user_id=user_id)
+                game_player.is_active = False
+                game_player.save()
+            except GamePlayer.DoesNotExist:
+                pass
+        
+        kicked_user = membership.user
+        messages.success(request, f"{kicked_user.username} has been removed from the room")
+        
+    except RoomMembership.DoesNotExist:
+        messages.error(request, "Player not found in this room")
+    
+    return redirect('room', room_code=room_code)
 
 def game_status(request, room_code):
     """Get current game status for polling"""
@@ -266,6 +418,55 @@ def game_status(request, room_code):
 
     return JsonResponse(data)
 
+@login_required
+def change_password(request):
+    """Allow users to change their password"""
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Check current password is correct
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect')
+        elif new_password != confirm_password:
+            messages.error(request, 'New passwords do not match')
+        elif len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long')
+        else:
+            # Set new password
+            request.user.set_password(new_password)
+            request.user.save()
+            # Keep user logged in after password change
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Password changed successfully!')
+            return redirect('edit_profile')
+    
+    return render(request, 'change_password.html')
+
+@login_required
+def delete_account_confirm(request):
+    """Show confirmation page for account deletion"""
+    return render(request, 'delete_account_confirm.html')
+
+@login_required
+@require_POST
+def delete_account(request):
+    """Delete user account"""
+    # Verify password before deletion
+    password = request.POST.get('password')
+    
+    if request.user.check_password(password):
+        # Deactivate all room memberships
+        request.user.room_memberships.update(is_active=False)
+        # Delete the user
+        request.user.delete()
+        messages.success(request, 'Your account has been deleted.')
+        return redirect('home')
+    else:
+        messages.error(request, 'Incorrect password. Account not deleted.')
+        return redirect('edit_profile')
 
 
 

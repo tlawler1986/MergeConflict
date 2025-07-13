@@ -38,8 +38,9 @@ class CardsAPIClient:
     if packs is None:
       packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
     
-    # Create cache key from pack names
-    cache_key = f"cards_{'_'.join(sorted(packs))}"
+    # Create cache key from pack names (sanitize for memcached compatibility)
+    pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
+    cache_key = f"cards_{pack_string}"
     cards = cache.get(cache_key)
     
     if not cards:
@@ -62,34 +63,50 @@ class CardsAPIClient:
     return cards
 
   def get_black_cards(self, count=1, packs=None):
-    """Get random black cards (questions)"""
+    """Get random black cards (questions) with improved caching"""
     if packs is None:
       packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
-        
-    all_cards = self.get_cards(packs)
-    black_cards = all_cards.get('black', [])
     
-    if len(black_cards) < count:
-      logger.warning(f"Only {len(black_cards)} black cards available, requested {count}")
-      return black_cards
+    # Check if we have cached black cards (sanitize for memcached compatibility)
+    pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
+    cache_key = f"black_cards_pool_{pack_string}"
+    black_cards_pool = cache.get(cache_key)
+    
+    if not black_cards_pool:
+      all_cards = self.get_cards(packs)
+      black_cards_pool = all_cards.get('black', [])
+      # Cache the pool for 30 minutes
+      cache.set(cache_key, black_cards_pool, 1800)
+    
+    if len(black_cards_pool) < count:
+      logger.warning(f"Only {len(black_cards_pool)} black cards available, requested {count}")
+      return black_cards_pool
     
     import random
-    return random.sample(black_cards, count)
+    return random.sample(black_cards_pool, count)
 
   def get_white_cards(self, count=10, packs=None):
-    """Get random white cards (answers)"""
+    """Get random white cards (answers) with improved caching"""
     if packs is None:
       packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
-        
-    all_cards = self.get_cards(packs)
-    white_cards = all_cards.get('white', [])
     
-    if len(white_cards) < count:
-      logger.warning(f"Only {len(white_cards)} white cards available, requested {count}")
-      return white_cards
+    # Check if we have cached white cards (sanitize for memcached compatibility)
+    pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
+    cache_key = f"white_cards_pool_{pack_string}"
+    white_cards_pool = cache.get(cache_key)
+    
+    if not white_cards_pool:
+      all_cards = self.get_cards(packs)
+      white_cards_pool = all_cards.get('white', [])
+      # Cache the pool for 30 minutes
+      cache.set(cache_key, white_cards_pool, 1800)
+    
+    if len(white_cards_pool) < count:
+      logger.warning(f"Only {len(white_cards_pool)} white cards available, requested {count}")
+      return white_cards_pool
     
     import random
-    return random.sample(white_cards, count)
+    return random.sample(white_cards_pool, count)
 
   def _get_fallback_packs(self):
     """Fallback pack list if API is down"""
