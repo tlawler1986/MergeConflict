@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Your Email - Merge Conflict{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Verify Your Email</h1>
+    
+    <div class="success-message">
+        We have sent an email to you for verification. Follow the link provided to finalize the signup process.
+    </div>
+    
+    <p>Please check your email and click on the verification link to activate your account.</p>
+    
+    <p class="text-muted">
+        If you don't see the email, check your spam folder or 
+        <a href="{% url 'account_email' %}" class="link">request a new verification email</a>.
+    </p>
+</div>
+{% endblock %}

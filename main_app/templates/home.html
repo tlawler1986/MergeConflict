@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Merge Conflict - Cards Against Humanity for Developers{% endblock %}
+
+{% block extra_css %}
+#main-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.tagline {
+    font-size: 20px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.description {
+    max-width: 600px;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 20px 0;
+    color: #555;
+}
+
+#main-menu button {
+    width: 200px;
+    height: 60px;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.draw-black-card {
+    background-color: black;
+    color: white;
+    border: 2px solid black;
+}
+
+.draw-white-cards {
+    background-color: white;
+    color: black;
+    border: 2px solid black;
+}
+
+#main-menu button:hover {
+    transform: scale(1.05);
+}
+
+#rules-section {
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 10px;
+    text-align: left;
+}
+
+.rules-content h2 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.rules-content p {
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.close-rules {
+    background-color: #666;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.close-rules:hover {
+    background-color: #555;
+}
+{% endblock %}
+
+{% block content %}
+<!-- Main Content -->
+<div id="main-menu">
+    <h1>Merge Conflict</h1>
+    <p class="tagline">Cards Against Humanity for Developers</p>
+    
+    <p class="description">
+        The party game for developers! Play Cards Against Humanity with programming humor, 
+        git references, and all the tech jokes that make our daily lives both hilarious and painful.
+    </p>
+
+    <div>
+        <button class="draw-black-card" onclick="showRules()">View Game Rules</button>
+        {% if user.is_authenticated %}
+            <button class="draw-white-cards" onclick="window.location.href='/room/'">Go to Game Room</button>
+        {% else %}
+            <button class="draw-white-cards" onclick="window.location.href='/accounts/signup/'">Get Started</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rules Section (Hidden by default) -->
+<div id="rules-section" style="display: none;">
+    <div class="rules-content">
+        <h2>How to Play Merge Conflict</h2>
+        <p><strong>Setup:</strong> Each player gets 10 white cards. One player is the Card Czar for the round.</p>
+        <p><strong>Round Play:</strong> The Card Czar reads a black card out loud. Everyone else answers by playing a white card, face down.</p>
+        <p><strong>Judging:</strong> The Card Czar picks the funniest combination. The player who played the winning white card gets a point.</p>
+        <p><strong>Rotation:</strong> The role of Card Czar rotates to the next player each round.</p>
+        <p><strong>Winning:</strong> First player to get the target number of points (or after set number of rounds) wins!</p>
+        <p><strong>Developer Twist:</strong> All the humor is focused on programming, git conflicts, debugging, and developer life!</p>
+        
+        <button class="close-rules" onclick="hideRules()">Close Rules</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showRules() {
+        document.getElementById('rules-section').style.display = 'block';
+    }
+    
+    function hideRules() {
+        document.getElementById('rules-section').style.display = 'none';
+    }
+</script>
+{% endblock %}

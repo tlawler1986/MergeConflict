@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - Merge Conflict{% endblock %}
+
+{% block extra_css %}
+.avatar-preview {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.avatar-preview img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid #ddd;
+    object-fit: cover;
+}
+
+.default-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: #ddd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    color: #666;
+    border: 3px solid #ddd;
+    margin: 0 auto;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.form-actions .btn-secondary {
+    background-color: #666;
+    color: white;
+    border-color: #666;
+}
+
+.form-actions .btn-secondary:hover {
+    background-color: #555;
+}
+{% endblock %}
+
+{% block content %}
+<div class="form-container" style="max-width: 600px;">
+    <h1>Edit Profile</h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="success-message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="avatar-preview">
+            {% if user.avatar_url %}
+                <img src="{{ user.avatar_url.url }}" alt="Profile Picture">
+            {% else %}
+                <div class="default-avatar">{{ user.username.0|upper }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="avatar">Profile Picture</label>
+            <input type="file" id="avatar" name="avatar" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}" required>
+            {% if form.username.errors %}
+                <div class="error">{{ form.username.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+            {% if form.email.errors %}
+                <div class="error">{{ form.email.errors.0 }}</div>
+            {% endif %}
+            {% if user.emailaddress_set.filter.verified.False.exists %}
+                <small style="color: #f90;">
+                    You have unverified email addresses. Check your email for verification links.
+                </small>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}">
+        </div>
+
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Save Changes</button>
+            <a href="/room/" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+
+    <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #eee;">
+        <h2>Account Settings</h2>
+        
+        <div style="margin: 20px 0;">
+            <a href="{% url 'change_password' %}" class="btn-primary" style="text-decoration: none; display: inline-block;">
+                Change Password
+            </a>
+        </div>
+    </div>
+
+    <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #eee;">
+        <div style="margin-top: 20px; padding: 20px; background-color: #fee; border: 2px solid #fcc; border-radius: 8px;">
+            <h3 style="color: #c00; margin-bottom: 10px;">Danger Zone</h3>
+            <p style="margin-bottom: 15px;">Deleting your account is permanent and cannot be undone.</p>
+            
+            <div style="text-align: center;">
+                <a href="{% url 'delete_account_confirm' %}" class="btn-danger" style="text-decoration: none;">
+                    Delete Account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
