@@ -62,11 +62,12 @@ class GameService:
   def create_round(game):
     """Create a new round with a black card"""
     # Get random black card from API
-    black_cards = cards_api.get_black_cards(count=1)
+    # Fetch multiple cards at once to improve caching
+    black_cards = cards_api.get_black_cards(count=5)  # Get more for cache
     if not black_cards:
       raise Exception("No black cards available")
 
-    black_card = black_cards[0]
+    black_card = black_cards[0]  # Use the first one
 
     # Determine next judge (rotate through players)
     last_round = game.rounds.order_by('-round_number').first()
@@ -74,14 +75,15 @@ class GameService:
       # Get next player after current judge
       players = list(game.players.order_by('id'))
       current_judge_index = next(
-        (i for i, p in enumerate(players) if p.id == last_round.judge.id),
+        (i for i, p in enumerate(players) if p.user.id == last_round.judge.id),
         -1
       )
       next_judge_index = (current_judge_index + 1) % len(players)
-      judge = players[next_judge_index]
+      judge = players[next_judge_index].user  # Get the User, not GamePlayer
     else:
       # First round - random judge
-      judge = game.players.order_by('?').first()
+      judge_player = game.players.order_by('?').first()
+      judge = judge_player.user if judge_player else None
 
     # Create the round
     round_number = (last_round.round_number + 1) if last_round else 1
@@ -136,10 +138,10 @@ class GameService:
 
   @staticmethod
   @transaction.atomic
-  def select_winner(round_obj, submission_id, judge):
+  def select_winner(round_obj, submission_id, judge_player):
     """Judge selects the winning submission"""
-    # Verify judge
-    if round_obj.judge.id != judge.id:
+    # Verify judge (compare User objects)
+    if round_obj.judge.id != judge_player.user.id:
       raise Exception("Only the judge can select winner")
 
     # Get submission

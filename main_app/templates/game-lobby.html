@@ -310,7 +310,7 @@
                 </div>
                 <div class="settings-item">
                     <span>Turn Timer:</span>
-                    <span class="settings-value">{{ room.turn_time_limit }} seconds</span>
+                    <span class="settings-value">{% widthratio room.turn_time_limit 60 1 %} minutes</span>
                 </div>
                 <div class="settings-item">
                     <span>Room Status:</span>
@@ -339,9 +339,29 @@
 
 {% block extra_js %}
 <script>
-    // Refresh the page periodically to see new players join
-    setTimeout(function() {
-        location.reload();
-    }, 5000); // Refresh every 5 seconds
+    // Check for game status and player updates every 3 seconds
+    setInterval(function() {
+        // Check if a game exists for this room
+        fetch("{% url 'game_status' room.room_code %}")
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Game status check failed');
+            })
+            .then(data => {
+                // If game is active, redirect to game page
+                if (data.game_status === 'active') {
+                    window.location.href = "{% url 'game_play' room.room_code %}";
+                } else {
+                    // Otherwise just refresh to show new players
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                // If no game exists yet or error, just refresh the page
+                location.reload();
+            });
+    }, 3000); // Check every 3 seconds
 </script>
 {% endblock %}

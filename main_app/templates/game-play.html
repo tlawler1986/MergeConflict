@@ -12,8 +12,12 @@
       <div class="black-card-section">
           <h3>Black Card</h3>
           <div class="card black-card">
-              <p>{{ current_round.black_card.text }}</p>
-              <small>Pick {{ current_round.black_card.pick }}</small>
+              {% if current_round and current_round.black_card %}
+                  <p>{{ current_round.black_card.text|default:"Loading..." }}</p>
+                  <small>Pick {{ current_round.black_card.pick|default:1 }}</small>
+              {% else %}
+                  <p>No black card available</p>
+              {% endif %}
           </div>
       </div>
 
@@ -32,17 +36,17 @@
                   <!-- Player's Hand -->
                   <div class="hand-section">
                       <h3>Your Cards</h3>
-                      <form method="post" action="{% url 'submit_card' room.room_code %}">
+                      <p class="player-instruction">Click on the card you want to play!</p>
+                      <form id="card-form" method="post" action="{% url 'submit_card' room.room_code %}">
                           {% csrf_token %}
+                          <input type="hidden" id="card_id" name="card_id" value="">
                           <div class="card-grid">
                               {% for card in player.card_hand %}
-                                  <label class="card white-card">
-                                      <input type="radio" name="card_id" value="{{ card.id }}" required>
+                                  <div class="card white-card playable" onclick="submitCard('{{ card.id }}')">
                                       <p>{{ card.text }}</p>
-                                  </label>
+                                  </div>
                               {% endfor %}
                           </div>
-                          <button type="submit" class="btn btn-primary">Submit Card</button>
                       </form>
                   </div>
               {% else %}
@@ -57,20 +61,24 @@
           {% if is_judge %}
               <!-- Judge View -->
               <div class="judging-section">
-                  <h3>Select the Winner</h3>
-                  <form method="post" action="{% url 'select_winner' room.room_code %}">
+                  <h3>Select the Winning Card</h3>
+                  <p class="judge-instruction">Click on the card you think is the best!</p>
+                  <!-- Debug info -->
+                  <p style="font-size: 12px; color: #999;">Debug: {{ submissions|length }} submissions</p>
+                  <form id="judge-form" method="post" action="{% url 'select_winner' room.room_code %}">
                       {% csrf_token %}
+                      <input type="hidden" id="submission_id" name="submission_id" value="">
                       <div class="submissions-grid">
                           {% for submission in submissions %}
-                              <label class="card white-card submission">
-                                  <input type="radio" name="submission_id" value="{{ submission.id }}" required>
+                              <div class="card white-card submission" onclick="selectWinner({{ submission.id }})">
                                   {% for card in submission.white_cards %}
                                       <p>{{ card.text }}</p>
                                   {% endfor %}
-                              </label>
+                              </div>
+                          {% empty %}
+                              <p>No submissions yet!</p>
                           {% endfor %}
                       </div>
-                      <button type="submit" class="btn btn-primary">Select Winner</button>
                   </form>
               </div>
           {% else %}
@@ -81,17 +89,19 @@
       <!-- Players List -->
       <div class="players-sidebar">
           <h3>Players</h3>
-          <ul class="players-list">
+          <div class="players-list">
               {% for game_player in players %}
-                  <li>
-                      {{ game_player.user.username }}
-                      <span class="score">{{ game_player.score }} points</span>
-                      {% if current_round.judge == game_player.user %}
-                          <span class="judge-indicator">👨‍⚖️</span>
-                      {% endif %}
-                  </li>
+                  <div class="player-score-card">
+                      <div class="player-name">
+                          {{ game_player.user.username }}
+                          {% if current_round.judge == game_player.user %}
+                              <span class="judge-indicator">👨‍⚖️</span>
+                          {% endif %}
+                      </div>
+                      <div class="player-score">{{ game_player.score }}</div>
+                  </div>
               {% endfor %}
-          </ul>
+          </div>
       </div>
   </div>
 
@@ -126,6 +136,37 @@
   .white-card:hover {
       transform: scale(1.05);
   }
+  
+  /* Submission cards for judging */
+  .submission {
+      cursor: pointer;
+      transition: all 0.3s ease;
+  }
+  
+  .submission:hover {
+      background-color: #000;
+      color: #fff;
+      transform: scale(1.05);
+  }
+  
+  .judge-instruction, .player-instruction {
+      text-align: center;
+      font-style: italic;
+      color: #666;
+      margin-bottom: 20px;
+  }
+  
+  /* Playable cards for players */
+  .playable {
+      cursor: pointer;
+      transition: all 0.3s ease;
+  }
+  
+  .playable:hover {
+      background-color: #000;
+      color: #fff;
+      transform: scale(1.05);
+  }
 
   .white-card input[type="radio"] {
       position: absolute;
@@ -147,14 +188,60 @@
       position: fixed;
       right: 20px;
       top: 100px;
-      background: #f5f5f5;
+      background: white;
+      border: 3px solid black;
+      border-radius: 12px;
       padding: 20px;
+      min-width: 200px;
+  }
+  
+  .players-sidebar h3 {
+      margin-bottom: 15px;
+      text-align: center;
+  }
+  
+  .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+  }
+  
+  .player-score-card {
+      background-color: #f9f9f9;
+      border: 2px solid #333;
       border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s;
+  }
+  
+  .player-score-card:hover {
+      transform: scale(1.05);
+  }
+  
+  .player-name {
+      font-weight: bold;
+      color: #333;
+  }
+  
+  .player-score {
+      font-size: 24px;
+      font-weight: bold;
+      color: #000;
+      background-color: #FFD700;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
   }
 
   .judge-badge {
-      background: #FFD700;
-      color: #000;
+      background: #4CAF50;
+      color: #fff;
       padding: 5px 10px;
       border-radius: 5px;
       font-weight: bold;
@@ -169,16 +256,86 @@
   </style>
 
   <script>
-  // Poll for game status updates every 3 seconds
-  setInterval(function() {
-      fetch("{% url 'game_status' room.room_code %}")
-          .then(response => response.json())
-          .then(data => {
-              // Reload page if round status changes
-              if (data.round_status !== "{{ current_round.status }}") {
-                  location.reload();
-              }
-          });
-  }, 3000);
+  // Store current round status
+  let currentRoundStatus = "{{ current_round.status }}";
+  let currentRoundNumber = {{ current_round.round_number|default:0 }};
+  let isJudge = {{ is_judge|lower }};
+  
+  // Only start polling if not judging or not the judge
+  if (!(isJudge && currentRoundStatus === 'judging')) {
+      // Poll for game status updates every 3 seconds
+      const statusChecker = setInterval(function() {
+          fetch("{% url 'game_status' room.room_code %}")
+              .then(response => response.json())
+              .then(data => {
+                  console.log('Status check:', data);
+                  // Only reload if something actually changed
+                  if (data.round_status !== currentRoundStatus || 
+                      data.round_number !== currentRoundNumber) {
+                      console.log('Reloading: status or round changed');
+                      location.reload();
+                  }
+              })
+              .catch(error => {
+                  console.error('Status check failed:', error);
+              });
+      }, 3000);
+  } else {
+      console.log('Judge in judging phase - auto-refresh disabled');
+  }
+  
+  // Function to select winner (for judges)
+  function selectWinner(submissionId) {
+      console.log('Selecting winner with submission ID:', submissionId);
+      
+      // Get the form
+      const form = document.getElementById('judge-form');
+      const hiddenInput = document.getElementById('submission_id');
+      
+      if (!form) {
+          console.error('Form not found!');
+          return;
+      }
+      
+      if (!hiddenInput) {
+          console.error('Hidden input not found!');
+          return;
+      }
+      
+      // Set the hidden input value
+      hiddenInput.value = submissionId;
+      console.log('Set hidden input to:', hiddenInput.value);
+      
+      // Submit the form
+      console.log('Submitting form...');
+      form.submit();
+  }
+  
+  // Function to submit card (for players)
+  function submitCard(cardId) {
+      console.log('Submitting card with ID:', cardId);
+      
+      // Get the form
+      const form = document.getElementById('card-form');
+      const hiddenInput = document.getElementById('card_id');
+      
+      if (!form) {
+          console.error('Form not found!');
+          return;
+      }
+      
+      if (!hiddenInput) {
+          console.error('Hidden input not found!');
+          return;
+      }
+      
+      // Set the hidden input value
+      hiddenInput.value = cardId;
+      console.log('Set hidden input to:', hiddenInput.value);
+      
+      // Submit the form
+      console.log('Submitting form...');
+      form.submit();
+  }
   </script>
   {% endblock %}

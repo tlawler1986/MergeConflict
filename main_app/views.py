@@ -199,8 +199,22 @@ def start_game(request, room_code):
         messages.error(request, "Need at least 2 players to start")
         return redirect('room', room_code=room_code)
 
-    # Create and start the game
-    game = GameService.create_game(room)
+    # Check if a game already exists for this room
+    try:
+        game = room.game
+        if game.status == 'active':
+            # Game is already active, redirect to it
+            messages.info(request, "Game is already in progress")
+            return redirect('game_play', room_code=room_code)
+        elif game.status == 'ended':
+            # Previous game ended, delete it and create new one
+            game.delete()
+            game = GameService.create_game(room)
+    except Game.DoesNotExist:
+        # No game exists, create one
+        game = GameService.create_game(room)
+    
+    # Start the game
     GameService.start_game(game)
     game.status = 'active'
     game.save()
@@ -309,6 +323,9 @@ def select_winner(request, room_code):
         return redirect('game_play', room_code=room_code)
 
     try:
+        # Debug logging
+        print(f"DEBUG select_winner: submission_id={submission_id}, type={type(submission_id)}")
+        
         judge_player = game.players.get(user=request.user)
         game_winner = GameService.select_winner(
             current_round,
@@ -325,8 +342,13 @@ def select_winner(request, room_code):
             messages.success(request, "Round complete! Starting next round...")
             GameService.create_round(game)
 
+    except GamePlayer.DoesNotExist:
+        messages.error(request, "Judge player not found")
     except Exception as e:
-        messages.error(request, str(e))
+        print(f"DEBUG select_winner error: {e}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Error selecting winner: {str(e)}")
 
     return redirect('game_play', room_code=room_code)
 
