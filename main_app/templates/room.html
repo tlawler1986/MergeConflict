@@ -346,10 +346,11 @@
         <div class="room-section">
             <h2>Create New Room</h2>
             
-            <form id="create-room-form">
+            <form id="create-room-form" method="post" action="{% url 'dashboard' %}">
+                {% csrf_token %}
                 <div class="form-group">
                     <label for="room-name">Room Name:</label>
-                    <input type="text" id="room-name" name="room-name" placeholder="My Epic Dev Game" required>
+                    <input type="text" id="room-name" name="room_name" placeholder="My Epic Dev Game" required>
                 </div>
                 
                 <div class="settings-grid">
@@ -684,6 +685,8 @@
         }
 
         // Form handlers
+        // Commented out to allow normal Django form submission
+        /*
         document.getElementById('create-room-form').addEventListener('submit', function(event) {
             event.preventDefault();
             
@@ -723,6 +726,7 @@
             // In Django, this would POST to your create room endpoint
             // window.location.href = `/room/${roomCode}/lobby/`;
         });
+        */
         
         document.getElementById('join-room-form').addEventListener('submit', function(event) {
             event.preventDefault();
