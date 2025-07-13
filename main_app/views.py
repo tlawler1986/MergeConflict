@@ -280,6 +280,50 @@ def select_winner(request, room_code):
 
     return redirect('game_play', room_code=room_code)
 
+@login_required
+@require_POST
+def kick_player(request, room_code, user_id):
+    """Room creator can kick players from the room"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+    
+    # Only room creator can kick players
+    if request.user != room.creator:
+        messages.error(request, "Only the room creator can kick players")
+        return redirect('room', room_code=room_code)
+    
+    # Can't kick yourself
+    if user_id == request.user.id:
+        messages.error(request, "You cannot kick yourself from the room")
+        return redirect('room', room_code=room_code)
+    
+    # Find the membership to deactivate
+    try:
+        membership = RoomMembership.objects.get(
+            room=room,
+            user_id=user_id,
+            is_active=True
+        )
+        membership.is_active = False
+        membership.save()
+        
+        # Also deactivate them from any active game
+        active_game = room.games.filter(status='active').first()
+        if active_game:
+            try:
+                game_player = active_game.players.get(user_id=user_id)
+                game_player.is_active = False
+                game_player.save()
+            except GamePlayer.DoesNotExist:
+                pass
+        
+        kicked_user = membership.user
+        messages.success(request, f"{kicked_user.username} has been removed from the room")
+        
+    except RoomMembership.DoesNotExist:
+        messages.error(request, "Player not found in this room")
+    
+    return redirect('room', room_code=room_code)
+
 def game_status(request, room_code):
     """Get current game status for polling"""
     room = get_object_or_404(Room, room_code=room_code)
