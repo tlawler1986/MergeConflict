@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Merge Conflict{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Game Dashboard</h1>
+    
+    <!-- Create Room Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2>Create New Room</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="room_name" class="form-control" placeholder="Room Name" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Room</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- My Rooms Section -->
+    <div class="card">
+        <div class="card-body">
+            <h2>My Rooms</h2>
+            {% if user_rooms %}
+                <div class="list-group">
+                    {% for room in user_rooms %}
+                        <a href="{% url 'room' room.room_code %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{ room.name }}</h5>
+                                <small>Code: {{ room.room_code }}</small>
+                            </div>
+                            <p class="mb-1">
+                                Players: {{ room.memberships.filter.is_active.count }}
+                                {% if room.creator == request.user %}
+                                    <span class="badge badge-primary">Creator</span>
+                                {% endif %}
+                            </p>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>You haven't joined any rooms yet. Create one above!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

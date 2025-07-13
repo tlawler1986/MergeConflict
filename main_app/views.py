@@ -10,11 +10,40 @@ from .forms import SignUpForm, ProfileEditForm
 from .services import GameService
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Room, Game, GamePlayer, CardSubmission
+from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership
 
 # Create your views here.
 def home(request):
   return render(request, 'home.html')
+
+@login_required
+def dashboard(request):
+    """Display dashboard with room list and create room functionality"""
+    # Get rooms where user is a member
+    user_rooms = Room.objects.filter(
+        memberships__user=request.user,
+        memberships__is_active=True,
+        is_active=True
+    ).distinct()
+    
+    # Handle room creation if POST
+    if request.method == 'POST':
+        room_name = request.POST.get('room_name', 'New Room')
+        room = Room.objects.create(
+            name=room_name,
+            creator=request.user
+        )
+        # Add creator as member
+        RoomMembership.objects.create(
+            user=request.user,
+            room=room
+        )
+        return redirect('room', room_code=room.room_code)
+    
+    context = {
+        'user_rooms': user_rooms,
+    }
+    return render(request, 'room.html', context)
 
 @login_required
 def room(request, room_code):
@@ -31,9 +60,11 @@ def room(request, room_code):
     context = {
         'room': room,
         'player_count': player_count,
+        'players': room.memberships.filter(is_active=True).select_related('user'),
+        'is_creator': room.creator == request.user,
     }
     
-    return render(request, 'main_app/room.html', context)
+    return render(request, 'lobby.html', context)
 
 class Login(LoginView):
     template_name = 'registration/login.html'
