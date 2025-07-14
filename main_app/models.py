@@ -39,7 +39,7 @@ class Room(models.Model):
                 return code
 
 class RoomMembership(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_memberships')
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='memberships')
     joined_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
