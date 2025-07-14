@@ -158,11 +158,38 @@ class GameService:
     submission.player.score += 1
     submission.player.save()
 
-    # Check for game winner (e.g., first to 7 points)
-    if submission.player.score >= 7:
-      game = round_obj.game
-      game.winner = submission.player.user
+  # Check if we've reached the round limit
+    game = round_obj.game
+    if round_obj.round_number >= game.room.round_limit:
+      # Game is over - find player(s) with highest score
+      from django.db.models import Max
+      top_score = game.players.aggregate(Max('score'))['score__max']
+      top_players = game.players.filter(score=top_score)
+      if top_players.count() > 1:
+        # Multiple winners (tie) - leave winner as None to indicate tie
+        game.winner = None
+      else:
+        # Single winner
+        game.winner = top_players.first().user
+      game.status = 'ended'
       game.save()
       return game
+    return None  # Continue to next round
 
-    return None  # Game continues
+  @staticmethod
+  def end_game_early(game):
+      """End game before round limit - determine winner(s) by current highest score"""
+      from django.db.models import Max
+      top_score = game.players.aggregate(Max('score'))['score__max']
+      top_players = game.players.filter(score=top_score)
+
+      if top_players.count() > 1:
+        # Multiple winners (tie)
+        game.winner = None
+      else:
+        # Single winner
+        game.winner = top_players.first().user
+
+      game.status = 'ended'
+      game.save()
+      return game
