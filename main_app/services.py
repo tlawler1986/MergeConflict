@@ -178,18 +178,18 @@ class GameService:
 
   @staticmethod
   def end_game_early(game):
-      """End game before round limit - determine winner(s) by current highest score"""
-      from django.db.models import Max
-      top_score = game.players.aggregate(Max('score'))['score__max']
-      top_players = game.players.filter(score=top_score)
+    """End game before round limit - determine winner(s) by current highest score"""
+    from django.db.models import Max
+    top_score = game.players.aggregate(Max('score'))['score__max']
+    top_players = game.players.filter(score=top_score)
 
-      if top_players.count() > 1:
-        # Multiple winners (tie)
-        game.winner = None
-      else:
-        # Single winner
-        game.winner = top_players.first().user
+    if top_players.count() > 1:
+      # Multiple winners (tie)
+      game.winner = None
+    else:
+      # Single winner
+      game.winner = top_players.first().user
 
-      game.status = 'ended'
-      game.save()
-      return game
+    game.status = 'ended'
+    game.save()
+    return game
