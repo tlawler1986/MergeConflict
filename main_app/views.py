@@ -401,22 +401,29 @@ def kick_player(request, room_code, user_id):
 def game_status(request, room_code):
     """Get current game status for polling"""
     room = get_object_or_404(Room, room_code=room_code)
-    game = get_object_or_404(Game, room=room)
-    current_round = game.rounds.order_by('-round_number').first()
-
-    # Count submissions
-    submissions_count = 0
-    if current_round:
+    try:
+      game = Game.objects.get(room=room)
+      current_round = game.rounds.order_by('-round_number').first() if game else None
+      # Count submissions
+      submissions_count = 0
+      if current_round:
         submissions_count = current_round.submissions.count()
-
-    data = {
+      data = {
         'game_status': game.status,
         'round_status': current_round.status if current_round else None,
         'round_number': current_round.round_number if current_round else 0,
         'submissions_count': submissions_count,
-        'total_players': game.players.filter(is_active=True).count(),
-    }
-
+        'total_players': game.players.filter(is_active=True).count() if game else 0,
+      }
+    except Game.DoesNotExist:
+      # No game exists
+      data = {
+        'game_status': None,
+        'round_status': None,
+        'round_number': 0,
+        'submissions_count': 0,
+        'total_players': 0,
+      }
     return JsonResponse(data)
 
 @login_required
@@ -487,4 +494,5 @@ def game_results(request, room_code):
       'top_score': top_score,
       'is_creator': room.creator == request.user,
     }
-    return render(request, 'game-results.html', context)
+    return render(request, 'game_results.html', context)
+
