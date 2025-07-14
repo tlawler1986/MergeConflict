@@ -440,8 +440,14 @@ if (!(isJudge && currentRoundStatus === 'judging')) {
             .then(response => response.json())
             .then(data => {
                 console.log('Status check:', data);
+                // Check if game has ended
+                if (data.game_status === 'ended') {
+                    console.log('Game ended, redirecting to results...');
+                    window.location.href = "{% url 'game_results' room.room_code %}";
+                    return;
+                }
                 // Only reload if something actually changed
-                if (data.round_status !== currentRoundStatus || 
+                if (data.round_status !== currentRoundStatus ||
                     data.round_number !== currentRoundNumber) {
                     console.log('Reloading: status or round changed');
                     location.reload();
@@ -450,7 +456,7 @@ if (!(isJudge && currentRoundStatus === 'judging')) {
             .catch(error => {
                 console.error('Status check failed:', error);
             });
-    }, 3000);
+            }, 3000);
 } else {
     console.log('Judge in judging phase - auto-refresh disabled');
 }
