@@ -205,6 +205,29 @@
       </a>
     </div>
   </div>
+
+<script>
+    // Poll for new game start
+    setInterval(function() {
+      fetch("{% url 'game_status' room.room_code %}")
+        .then(response => response.json())
+        .then(data => {
+          // If a new game has started, redirect to game
+          if (data.game_status === 'active') {
+            window.location.href = "{% url 'game_play' room.room_code %}";
+          }
+          // If no game exists (preparing for new game), go to lobby
+          else if (!data.game_status || data.game_status === 'waiting') {
+            window.location.href = "{% url 'room' room.room_code %}";
+          }
+        })
+        .catch(error => {
+          // If error (like no game exists), redirect to room
+          window.location.href = "{% url 'room' room.room_code %}";
+        });
+    }, 3000); // Check every 3 seconds
+  </script>
+
   {% endblock %}
 
   
