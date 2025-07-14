@@ -314,7 +314,7 @@
 {% if is_creator %}
 <div class="host-controls" id="host-controls">
     <h4 style="margin-bottom: 15px;">Host Controls</h4>
-    <form method="post" action="{% url 'room' room.room_code %}">
+    <form method="post" action="{% url 'end_game' room.room_code %}">
         {% csrf_token %}
         <button type="submit" class="action-button" style="background-color: #dc3545; border-color: #dc3545;">
             End Game Early

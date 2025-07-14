@@ -496,3 +496,19 @@ def game_results(request, room_code):
     }
     return render(request, 'game_results.html', context)
 
+
+
+@login_required
+@require_POST
+def end_game(request, room_code):
+    """End game early (host only)"""
+    room = get_object_or_404(Room, room_code=room_code)
+    game = get_object_or_404(Game, room=room, status='active')
+    # Only room creator can end game
+    if request.user != room.creator:
+        messages.error(request, "Only the room creator can end the game")
+        return redirect('game_play', room_code=room_code)
+    # End the game using the service
+    GameService.end_game_early(game)
+    messages.success(request, "Game ended early!")
+    return redirect('game_results', room_code=room_code)
