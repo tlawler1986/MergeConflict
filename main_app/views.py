@@ -11,6 +11,7 @@ from .services import GameService
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership
+from django.db.models import Max
 
 # Create your views here.
 def home(request):
@@ -335,9 +336,9 @@ def select_winner(request, room_code):
         )
 
         if game_winner:
-            # Game is over
-            messages.success(request, f"{game_winner.winner.username} wins the game!")
-            return redirect('room', room_code=room_code)
+             # Game is over
+            messages.success(request, "Game complete!")
+            return redirect('game_results', room_code=room_code)
         else:
             # Start next round
             messages.success(request, "Round complete! Starting next round...")
@@ -459,7 +460,7 @@ def delete_account(request):
     
     if request.user.check_password(password):
         # Deactivate all room memberships
-        request.user.roommembership_set.update(is_active=False)
+        request.user.room_memberships.update(is_active=False)
         # Delete the user
         request.user.delete()
         messages.success(request, 'Your account has been deleted.')
@@ -468,6 +469,22 @@ def delete_account(request):
         messages.error(request, 'Incorrect password. Account not deleted.')
         return redirect('edit_profile')
 
-
-
-
+@login_required
+def game_results(request, room_code):
+    #"""Display game results with winner(s)"""
+    room = get_object_or_404(Room, room_code=room_code)
+    game = get_object_or_404(Game, room=room, status='ended')
+    # Get all players with scores
+    players = game.players.all().order_by('-score', 'user__username')
+    # Find winner(s) - handle ties
+    top_score = game.players.aggregate(Max('score'))['score__max']
+    winners = game.players.filter(score=top_score)
+    context = {
+      'room': room,
+      'game': game,
+      'players': players,
+      'winners': winners,
+      'top_score': top_score,
+      'is_creator': room.creator == request.user,
+    }
+    return render(request, 'game-results.html', context)

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+  {% load static %}
+
+  {% block content %}
+  <style>
+    /* Override base.html styles for game results page */
+    body {
+      background-color: #2c2c2c;
+      color: white;
+    }
+
+    .results-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .winner-announcement {
+      background-color: #ffd700;
+      color: #000;
+      border: 3px solid #000;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 40px;
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .winner-announcement.tie {
+      background-color: #ff6b6b;
+      color: white;
+    }
+
+    .final-scores {
+      background-color: #3a3a3a;
+      border: 2px solid #555;
+      border-radius: 10px;
+      padding: 30px;
+      margin-bottom: 40px;
+    }
+
+    .score-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin: 10px 0;
+      background-color: #4a4a4a;
+      border-radius: 8px;
+      font-size: 20px;
+    }
+
+    .score-item.winner {
+      background-color: #ffd700;
+      color: #000;
+      border: 2px solid #000;
+    }
+
+    .player-rank {
+      font-weight: bold;
+      margin-right: 15px;
+    }
+
+    .player-name {
+      flex-grow: 1;
+      text-align: left;
+    }
+
+    .player-score {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    .action-button {
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 2px solid;
+      border-radius: 8px;
+      transition: transform 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .action-button:hover {
+      transform: scale(1.05);
+    }
+
+    .play-again-button {
+      background-color: #28a745;
+      color: white;
+      border-color: #28a745;
+    }
+
+    .dashboard-button {
+      background-color: #007acc;
+      color: white;
+      border-color: #007acc;
+    }
+
+    .game-stats {
+      background-color: #3a3a3a;
+      border: 2px solid #555;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #ccc;
+      margin-top: 5px;
+    }
+  </style>
+
+  <div class="results-container">
+    <!-- Winner Announcement -->
+    {% if winners.count > 1 %}
+      <div class="winner-announcement tie">
+        🏆 IT'S A TIE! 🏆<br>
+        {% for winner in winners %}
+          {{ winner.user.username }}{% if not forloop.last %} & {% endif %}
+        {% endfor %}<br>
+        win with {{ top_score }} points!
+      </div>
+    {% else %}
+      <div class="winner-announcement">
+        🏆 {{ winners.first.user.username }} WINS! 🏆<br>
+        with {{ top_score }} points!
+      </div>
+    {% endif %}
+
+    <!-- Game Stats -->
+    <div class="game-stats">
+      <div class="stat-item">
+        <div class="stat-value">{{ game.rounds.count }}</div>
+        <div class="stat-label">Rounds Played</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ players|length }}</div>
+        <div class="stat-label">Players</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ game.rounds.count|add:"-1" }}</div>
+        <div class="stat-label">Cards Played</div>
+      </div>
+    </div>
+
+    <!-- Final Scores -->
+    <div class="final-scores">
+      <h2>Final Scores</h2>
+      <ul class="score-list">
+        {% for player in players %}
+          <li class="score-item {% if player.score == top_score %}winner{% endif %}">
+            <span class="player-rank">#{{ forloop.counter }}</span>
+            <span class="player-name">
+              {{ player.user.username }}
+              {% if player.score == top_score %}👑{% endif %}
+            </span>
+            <span class="player-score">{{ player.score }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      {% if is_creator %}
+        <form method="post" action="{% url 'start_game' room.room_code %}" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="action-button play-again-button">
+            Play Again
+          </button>
+        </form>
+      {% endif %}
+      <a href="{% url 'dashboard' %}" class="action-button dashboard-button">
+        Back to Dashboard
+      </a>
+    </div>
+  </div>
+  {% endblock %}
+
+  
