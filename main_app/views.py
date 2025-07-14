@@ -459,7 +459,7 @@ def delete_account(request):
     
     if request.user.check_password(password):
         # Deactivate all room memberships
-        request.user.room_memberships.update(is_active=False)
+        request.user.roommembership_set.update(is_active=False)
         # Delete the user
         request.user.delete()
         messages.success(request, 'Your account has been deleted.')
