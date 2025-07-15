@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block game_nav_controls %}
+      {% if is_creator and game.status == 'active' %}
+          <form method="post" action="{% url 'end_game' room.room_code %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit" class="header-link" style="background-color: #DC3545; border: none; padding: 5px 15px; border-radius:
+  5px; margin-left: 20px;" onclick="return confirm('Are you sure you want to end the game early?');">
+                  End Game Early
+              </button>
+          </form>
+      {% endif %}
+{% endblock %}
+
 {% block content %}
 <style>
     /* Override base.html styles for game page */
@@ -271,22 +283,6 @@
         padding: 20px;
     }
 
-    /* Host Controls */
-    .host-controls {
-        position: absolute;
-        top: 70px;
-        right: 20px;
-        background-color: #4a4a4a;
-        border: 2px solid #666;
-        border-radius: 8px;
-        padding: 15px;
-        display: none;
-    }
-
-    .host-controls.show {
-        display: block;
-    }
-
     @media (max-width: 1024px) {
         .game-container {
             grid-template-areas: 
@@ -310,18 +306,7 @@
     }
 </style>
 
-<!-- Host Controls (Hidden by default) -->
-{% if is_creator %}
-<div class="host-controls" id="host-controls">
-    <h4 style="margin-bottom: 15px;">Host Controls</h4>
-    <form method="post" action="{% url 'end_game' room.room_code %}">
-        {% csrf_token %}
-        <button type="submit" class="action-button" style="background-color: #dc3545; border-color: #dc3545;">
-            End Game Early
-        </button>
-    </form>
-</div>
-{% endif %}
+
 
 <!-- Game Container -->
 <div class="game-container">

@@ -251,6 +251,7 @@
                 {% endif %}
                 <a href="/room/" class="header-link" style="margin-left: 20px;">Game Dashboard</a>
                 <a href="/profile/edit/" class="header-link">My Profile</a>
+                {% block game_nav_controls %}{% endblock %}
                 <a href="{% url 'account_logout' %}" class="header-link">Logout</a>
             {% else %}
                 <a href="{% url 'account_login' %}" class="header-link">Login</a>
