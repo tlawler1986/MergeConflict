@@ -201,4 +201,3 @@ CACHE_TTL = {
 
 import django_on_heroku
 django_on_heroku.settings(locals())
-gunicorn==21.2.0
