@@ -317,7 +317,10 @@
                 <div class="round-number">Round {{ current_round.round_number }}/{{ room.round_limit }}</div>
                 <div class="current-judge">Judge: {{ current_round.judge.username }}</div>
             </div>
-            <div class="turn-timer">⏰ {% widthratio room.turn_time_limit 60 1 %}:00</div>
+            <div class="turn-timer">
+                <span class="timer-label">Time Remaining:</span>
+                <span class="timer-value" id="countdown-timer">--:--</span>
+            </div>            
         </div>
         
         <div class="players-scores">
@@ -409,7 +412,7 @@
         {% endif %}
     </div>
 </div>
-
+  
 <script>
 // Store current round status
 let currentRoundStatus = "{{ current_round.status }}";
@@ -523,5 +526,81 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     {% endif %}
 });
+
+// Countdown Timer
+let remainingTime = {{ remaining_time|default:0 }};
+let timerInterval;
+let checkInterval;
+
+function formatTime(seconds) {
+const minutes = Math.floor(seconds / 60);
+const secs = seconds % 60;
+return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateTimerDisplay() {
+const timerElement = document.getElementById('countdown-timer');
+if (timerElement) {
+    timerElement.textContent = formatTime(remainingTime);
+
+    // Change color when time is low
+    if (remainingTime <= 30) {
+        timerElement.style.color = '#ff6b6b';
+        } else if (remainingTime <= 60) {
+        timerElement.style.color = '#ffd93d';
+        } else {
+        timerElement.style.color = '#6bcf7f';
+        }
+    }
+}
+
+function startTimer() {
+// Initial display
+updateTimerDisplay();
+
+// Update every second
+timerInterval = setInterval(() => {
+    if (remainingTime > 0) {
+    remainingTime--;
+    updateTimerDisplay();
+    } else {
+    // Time's up - check with server
+    clearInterval(timerInterval);
+    checkTimerStatus();
+    }
+}, 1000);
+
+// Sync with server every 30 seconds
+checkInterval = setInterval(checkTimerStatus, 30000);
+}
+
+async function checkTimerStatus() {
+try {
+    const response = await fetch("{% url 'check_timer' room.room_code %}");
+    const data = await response.json();
+
+    remainingTime = data.remaining;
+    updateTimerDisplay();
+
+    if (data.phase_changed) {
+    // Reload page to show new phase
+    location.reload();
+    }
+} catch (error) {
+    console.error('Timer check failed:', error);
+}
+}
+
+// Start timer if game is active
+{% if game.status == 'active' and current_round %}
+startTimer();
+{% endif %}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+if (timerInterval) clearInterval(timerInterval);
+if (checkInterval) clearInterval(checkInterval);
+});
+
 </script>
 {% endblock %}
