@@ -18,4 +18,5 @@ urlpatterns = [
   path('room/<str:room_code>/kick/<int:user_id>/', views.kick_player, name='kick_player'),
   path('room/<str:room_code>/results/', views.game_results, name='game_results'),
   path('room/<str:room_code>/end/', views.end_game, name='end_game'),
+  path('room/<str:room_code>/timer/', views.check_timer, name='check_timer'),
 ]

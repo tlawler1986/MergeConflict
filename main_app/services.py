@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from .models import Game, GamePlayer, Round, CardSubmission
 from .utils.api_client import cards_api
 import random
@@ -91,7 +92,8 @@ class GameService:
       game=game,
       round_number=round_number,
       black_card=black_card,
-      judge=judge
+      judge=judge,
+      phase_start_time=timezone.now()
     )
 
     return round_obj
