@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 import string
 import random
 
@@ -39,7 +40,7 @@ class Room(models.Model):
                 return code
 
 class RoomMembership(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_memberships')
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='memberships')
     joined_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -61,6 +62,7 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+    dealt_white_cards = models.JSONField(default=list)  # Track all dealt white card texts
 
 class GamePlayer(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='players')
@@ -91,7 +93,7 @@ class Round(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
-
+    phase_start_time = models.DateTimeField(default=timezone.now)
     class Meta:
         unique_together = ('game', 'round_number')
 
