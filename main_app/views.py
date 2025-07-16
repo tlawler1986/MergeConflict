@@ -6,6 +6,7 @@ from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
 from .forms import SignUpForm, ProfileEditForm
 from .services import GameService
 from django.http import JsonResponse
@@ -63,8 +64,15 @@ def join_room(request):
             room = Room.objects.get(room_code=room_code, is_active=True)
             
             # Check if already a member
-            if room.memberships.filter(user=request.user, is_active=True).exists():
-                messages.info(request, "You are already a member of this room")
+            existing_membership = room.memberships.filter(user=request.user).first()
+            if existing_membership:
+                if existing_membership.is_active:
+                    messages.info(request, "You are already a member of this room")
+                else:
+                    # Reactivate membership for previously kicked user
+                    existing_membership.is_active = True
+                    existing_membership.save()
+                    messages.success(request, f"Successfully rejoined {room.name}!")
             else:
                 # Add user to room
                 RoomMembership.objects.create(
@@ -251,6 +259,12 @@ def game_play(request, room_code):
     if current_round:
         submissions = current_round.submissions.all()
 
+    # Calculate remaining time if there's an active round
+    remaining_time = None
+    if current_round and current_round.status in ['card_selection', 'judging']:
+      elapsed = (timezone.now() - current_round.phase_start_time).total_seconds()
+      remaining_time = max(0, room.turn_time_limit - int(elapsed))
+
     context = {
         'room': room,
         'game': game,
@@ -261,6 +275,7 @@ def game_play(request, room_code):
         'has_submitted': has_submitted,
         'submissions': submissions,
         'players': game.players.all(),
+        'remaining_time': remaining_time, 
     }
 
     return render(request, 'game-play.html', context)
@@ -296,6 +311,7 @@ def submit_card(request, room_code):
         if actual_submissions >= expected_submissions:
             # Move to judging phase
             current_round.status = 'judging'
+            current_round.phase_start_time = timezone.now()
             current_round.save()
 
     except Exception as e:
@@ -381,14 +397,13 @@ def kick_player(request, room_code, user_id):
         membership.save()
         
         # Also deactivate them from any active game
-        active_game = room.games.filter(status='active').first()
-        if active_game:
-            try:
-                game_player = active_game.players.get(user_id=user_id)
+        try:
+            if hasattr(room, 'game') and room.game.status == 'active':
+                game_player = room.game.players.get(user_id=user_id)
                 game_player.is_active = False
                 game_player.save()
-            except GamePlayer.DoesNotExist:
-                pass
+        except (Game.DoesNotExist, GamePlayer.DoesNotExist):
+            pass
         
         kicked_user = membership.user
         messages.success(request, f"{kicked_user.username} has been removed from the room")
@@ -425,6 +440,48 @@ def game_status(request, room_code):
         'total_players': 0,
       }
     return JsonResponse(data)
+
+@login_required
+def check_timer(request, room_code):
+  """Check remaining time and auto-advance if expired"""
+  room = get_object_or_404(Room, room_code=room_code)
+  game = get_object_or_404(Game, room=room, status='active')
+  current_round = game.rounds.order_by('-round_number').first()
+
+  if not current_round:
+    return JsonResponse({'remaining': 0, 'phase_changed': False})
+
+  elapsed = (timezone.now() - current_round.phase_start_time).total_seconds()
+  remaining = max(0, room.turn_time_limit - int(elapsed))
+
+  phase_changed = False
+
+# Auto-advance if time expired
+  if remaining == 0:
+    if current_round.status == 'card_selection':
+      # Force advance to judging
+      current_round.status = 'judging'
+      current_round.phase_start_time = timezone.now()
+      current_round.save()
+      phase_changed = True
+    elif current_round.status == 'judging':
+      # Auto-select random winner or skip round
+      submissions = current_round.submissions.all()
+      if submissions:
+        import random
+        winner = random.choice(submissions)
+        judge_player = game.players.get(user=current_round.judge)
+        GameService.select_winner(current_round, str(winner.id), judge_player)
+      else:
+        # No submissions, start next round
+        GameService.create_round(game)
+      phase_changed = True
+
+  return JsonResponse({
+    'remaining': remaining,
+    'phase_changed': phase_changed,
+    'current_phase': current_round.status
+  })    
 
 @login_required
 def change_password(request):

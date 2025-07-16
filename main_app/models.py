@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 import string
 import random
 
@@ -91,7 +92,7 @@ class Round(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
-
+    phase_start_time = models.DateTimeField(default=timezone.now)
     class Meta:
         unique_together = ('game', 'round_number')
 
