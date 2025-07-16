@@ -447,6 +447,8 @@ let currentRoundStatus = "{{ current_round.status }}";
 let currentRoundNumber = {{ current_round.round_number|default:0 }};
 let isJudge = {{ is_judge|lower }};
 let selectedCardId = null;
+let currentSubmissionCount = {{ submissions|length }};
+let totalPlayers = {{ players|length }};
 
 // Function to update submission display
   function updateSubmissionDisplay(submissionCount, totalPlayers) {
