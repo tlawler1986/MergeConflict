@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Rooms - Merge Conflict{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Browse Rooms</h1>
+    
+    <!-- Search and Filter -->
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Search rooms..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-4">
+                <select name="filter" class="form-select">
+                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Rooms</option>
+                    <option value="mine" {% if filter_type == 'mine' %}selected{% endif %}>My Rooms</option>
+                    <option value="active" {% if filter_type == 'active' %}selected{% endif %}>Active Games</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Room List -->
+    <div class="row">
+        {% for room in page_obj %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ room.name }}</h5>
+                    <p class="card-text">
+                        Code: <strong>{{ room.room_code }}</strong><br>
+                        Host: {{ room.creator.username }}<br>
+                        Players: {{ room.player_count }}/{{ room.max_players }}
+                    </p>
+                    <a href="{% url 'room' room.room_code %}" class="btn btn-primary">Join Room</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p>No rooms found. <a href="{% url 'dashboard' %}">Create one!</a></p>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&filter={{ filter_type }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}&search={{ search_query }}&filter={{ filter_type }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&filter={{ filter_type }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
