@@ -447,6 +447,8 @@ let currentRoundStatus = "{{ current_round.status }}";
 let currentRoundNumber = {{ current_round.round_number|default:0 }};
 let isJudge = {{ is_judge|lower }};
 let selectedCardId = null;
+let currentSubmissionCount = {{ submissions|length }};
+let totalPlayers = {{ players|length }};
 
 // Function to update submission display
   function updateSubmissionDisplay(submissionCount, totalPlayers) {
@@ -465,8 +467,7 @@ let selectedCardId = null;
 
           // Add card backs for submitted cards
           for (let i = 0; i < submissionCount; i++) {
-              cardsHtml += '<div class="submitted-card" style="background-color: #666; color: #ccc;">Card 
-  submitted</div>';
+              cardsHtml += '<div class="submitted-card" style="background-color: #666; color: #ccc;">Card submitted</div>';
           }
 
           // Add waiting placeholder if needed
