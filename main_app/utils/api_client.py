@@ -113,12 +113,7 @@ class CardsAPIClient:
 
   def _get_fallback_packs(self):
     """Fallback pack list if API is down"""
-    return [
-      "Geek Pack",
-      "Science Pack",
-      "World Wide Web Pack",
-      "CAH Base Set"
-    ]
+    return self.DEFAULT_PACKS
 
   def _get_fallback_cards(self):
     """Backup cards if API is down"""
