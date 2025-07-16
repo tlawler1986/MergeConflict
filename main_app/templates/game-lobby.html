@@ -342,9 +342,11 @@
 let lastPlayerCount = {{ player_count }};
 
 function updateLobby() {
+    console.log('Checking lobby status...');
     fetch("{% url 'lobby_status' room.room_code %}")
         .then(response => response.json())
         .then(data => {
+            console.log('Lobby data:', data);
             // Handle errors or redirects
             if (data.error || data.redirect) {
                 if (data.redirect) {
@@ -353,21 +355,20 @@ function updateLobby() {
                 return;
             }
             
-            // Update player count if changed
-            if (data.player_count !== lastPlayerCount) {
-                lastPlayerCount = data.player_count;
-                
-                // Update player count in header
-                const playerHeader = document.querySelector('.players-section h2');
-                if (playerHeader) {
-                    playerHeader.textContent = `Players (${data.player_count}/{{ room.max_players }})`;
-                }
-                
-                // Update player list
-                const playerList = document.querySelector('.player-list');
-                playerList.innerHTML = '';
-                
-                data.players.forEach(player => {
+            // Always update player count
+            lastPlayerCount = data.player_count;
+            
+            // Update player count in header
+            const playerHeader = document.querySelector('.players-section h2');
+            if (playerHeader) {
+                playerHeader.textContent = `Players (${data.player_count}/{{ room.max_players }})`;
+            }
+            
+            // Always update player list (players might change even if count doesn't)
+            const playerList = document.querySelector('.player-list');
+            playerList.innerHTML = '';
+            
+            data.players.forEach(player => {
                     const playerCard = document.createElement('div');
                     playerCard.className = 'player-card';
                     if (player.is_creator) {
@@ -411,7 +412,6 @@ function updateLobby() {
                     
                     playerList.appendChild(playerCard);
                 });
-            }
         })
         .catch(error => {
             console.error('Lobby update failed:', error);
