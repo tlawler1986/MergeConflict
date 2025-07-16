@@ -35,6 +35,20 @@
         height: calc(100vh - 80px);
     }
 
+    .game-container.judge {
+    grid-template-areas: 
+        "scoreboard"
+        "black-card"
+        "submissions"
+        "hand";
+    grid-template-columns: 1fr;
+    width: 100%;
+    }
+
+    .game-container.judge .scoreboard {
+        justify-self: stretch;
+    }
+
     /* Scoreboard */
     .scoreboard {
         grid-area: scoreboard;
@@ -45,6 +59,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .game-info {
@@ -125,8 +141,8 @@
     }
 
     .turn-timer {
-        background-color: #ff6b6b;
-        color: white;
+        background-color: white;
+        color: black;
         padding: 10px 20px;
         border-radius: 20px;
         font-weight: bold;
@@ -309,7 +325,7 @@
 
 
 <!-- Game Container -->
-<div class="game-container">
+<div class="game-container {% if is_judge %}judge{% endif %}">
     <!-- Scoreboard -->
     <div class="scoreboard">
         <div class="game-info">

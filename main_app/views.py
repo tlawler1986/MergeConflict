@@ -64,8 +64,15 @@ def join_room(request):
             room = Room.objects.get(room_code=room_code, is_active=True)
             
             # Check if already a member
-            if room.memberships.filter(user=request.user, is_active=True).exists():
-                messages.info(request, "You are already a member of this room")
+            existing_membership = room.memberships.filter(user=request.user).first()
+            if existing_membership:
+                if existing_membership.is_active:
+                    messages.info(request, "You are already a member of this room")
+                else:
+                    # Reactivate membership for previously kicked user
+                    existing_membership.is_active = True
+                    existing_membership.save()
+                    messages.success(request, f"Successfully rejoined {room.name}!")
             else:
                 # Add user to room
                 RoomMembership.objects.create(
@@ -390,14 +397,13 @@ def kick_player(request, room_code, user_id):
         membership.save()
         
         # Also deactivate them from any active game
-        active_game = room.games.filter(status='active').first()
-        if active_game:
-            try:
-                game_player = active_game.players.get(user_id=user_id)
+        try:
+            if hasattr(room, 'game') and room.game.status == 'active':
+                game_player = room.game.players.get(user_id=user_id)
                 game_player.is_active = False
                 game_player.save()
-            except GamePlayer.DoesNotExist:
-                pass
+        except (Game.DoesNotExist, GamePlayer.DoesNotExist):
+            pass
         
         kicked_user = membership.user
         messages.success(request, f"{kicked_user.username} has been removed from the room")
