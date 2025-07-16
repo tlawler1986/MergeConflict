@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
-from .models import Game, GamePlayer, Round, CardSubmission
+from .models import Game, GamePlayer, Round, CardSubmission, UserStats
 from .utils.api_client import cards_api
 import random
 import json
@@ -208,6 +208,14 @@ class GameService:
         game.winner = top_players.first().user
       game.status = 'ended'
       game.save()
+      # Update user statistics
+      for player in game.players.all():
+        stats, created = UserStats.objects.get_or_create(user=player.user)
+        stats.games_played += 1
+        stats.total_score += player.score
+        if game.winner and player.user == game.winner:
+          stats.games_won += 1
+        stats.save()
       return game
     return None  # Continue to next round
 
@@ -227,4 +235,12 @@ class GameService:
 
     game.status = 'ended'
     game.save()
+    # Update user statistics
+    for player in game.players.all():
+      stats, created = UserStats.objects.get_or_create(user=player.user)
+      stats.games_played += 1
+      stats.total_score += player.score
+      if game.winner and player.user == game.winner:
+        stats.games_won += 1
+      stats.save()
     return game

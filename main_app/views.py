@@ -192,6 +192,16 @@ def edit_profile(request):
             return redirect('edit_profile')
     else:
         form = ProfileEditForm(instance=request.user)
+    
+    # Ensure user has stats
+    from .models import UserStats
+    UserStats.objects.get_or_create(user=request.user)
+    
+    # Clear any stale messages (temporary fix - remove after deployment)
+    storage = messages.get_messages(request)
+    for _ in storage:
+        pass  # This consumes and clears all messages
+    
     return render(request, 'edit_profile.html', {'form': form})
 
 @login_required
@@ -243,7 +253,7 @@ def game_play(request, room_code):
         player = game.players.get(user=request.user)
     except GamePlayer.DoesNotExist:
         messages.error(request, "You are not in this game")
-        return redirect('room_list')
+        return redirect('dashboard')
 
     # Get current round
     current_round = game.rounds.order_by('-round_number').first()
