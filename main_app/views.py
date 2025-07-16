@@ -13,6 +13,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership
 from django.db.models import Max
+from django.core.cache import cache
 
 # Create your views here.
 def home(request):
@@ -226,7 +227,8 @@ def start_game(request, room_code):
     # Start the game
     GameService.start_game(game)
     game.status = 'active'
-    game.save()
+    game.save() 
+    invalidate_game_status_cache(room_code)
 
     return redirect('game_play', room_code=room_code)
 
@@ -313,6 +315,7 @@ def submit_card(request, room_code):
             current_round.status = 'judging'
             current_round.phase_start_time = timezone.now()
             current_round.save()
+            invalidate_game_status_cache(room_code)
 
     except Exception as e:
         messages.error(request, str(e))
@@ -350,6 +353,7 @@ def select_winner(request, room_code):
             submission_id,
             judge_player
         )
+        invalidate_game_status_cache(room_code)
 
         if game_winner:
              # Game is over
@@ -359,6 +363,7 @@ def select_winner(request, room_code):
             # Start next round
             messages.success(request, "Round complete! Starting next round...")
             GameService.create_round(game)
+            invalidate_game_status_cache(room_code)
 
     except GamePlayer.DoesNotExist:
         messages.error(request, "Judge player not found")
@@ -402,6 +407,7 @@ def kick_player(request, room_code, user_id):
                 game_player = room.game.players.get(user_id=user_id)
                 game_player.is_active = False
                 game_player.save()
+                invalidate_game_status_cache(room_code)
         except (Game.DoesNotExist, GamePlayer.DoesNotExist):
             pass
         
@@ -415,31 +421,49 @@ def kick_player(request, room_code, user_id):
 
 def game_status(request, room_code):
     """Get current game status for polling"""
+    # Create cache key
+    cache_key = f'game_status_{room_code}'
+    
+    # Try to get from cache first
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        return JsonResponse(cached_data)
+    
+    # If not in cache, fetch from database
     room = get_object_or_404(Room, room_code=room_code)
     try:
-      game = Game.objects.get(room=room)
-      current_round = game.rounds.order_by('-round_number').first() if game else None
-      # Count submissions
-      submissions_count = 0
-      if current_round:
-        submissions_count = current_round.submissions.count()
-      data = {
-        'game_status': game.status,
-        'round_status': current_round.status if current_round else None,
-        'round_number': current_round.round_number if current_round else 0,
-        'submissions_count': submissions_count,
-        'total_players': game.players.filter(is_active=True).count() if game else 0,
-      }
+        game = Game.objects.get(room=room)
+        current_round = game.rounds.order_by('-round_number').first() if game else None
+        # Count submissions
+        submissions_count = 0
+        if current_round:
+            submissions_count = current_round.submissions.count()
+        data = {
+            'game_status': game.status,
+            'round_status': current_round.status if current_round else None,
+            'round_number': current_round.round_number if current_round else 0,
+            'submissions_count': submissions_count,
+            'total_players': game.players.filter(is_active=True).count() if game else 0,
+        }
     except Game.DoesNotExist:
-      # No game exists
-      data = {
-        'game_status': None,
-        'round_status': None,
-        'round_number': 0,
-        'submissions_count': 0,
-        'total_players': 0,
-      }
+        # No game exists
+        data = {
+            'game_status': None,
+            'round_status': None,
+            'round_number': 0,
+            'submissions_count': 0,
+            'total_players': 0,
+        }
+    
+    # Cache the result for 2 seconds (shorter than the 3-second poll interval)
+    cache.set(cache_key, data, timeout=2)
+    
     return JsonResponse(data)
+
+def invalidate_game_status_cache(room_code):
+    """Invalidate the game status cache for a specific room"""
+    cache_key = f'game_status_{room_code}'
+    cache.delete(cache_key)
 
 @login_required
 def check_timer(request, room_code):
@@ -463,6 +487,7 @@ def check_timer(request, room_code):
       current_round.status = 'judging'
       current_round.phase_start_time = timezone.now()
       current_round.save()
+      invalidate_game_status_cache(room_code)
       phase_changed = True
     elif current_round.status == 'judging':
       # Auto-select random winner or skip round
@@ -567,5 +592,6 @@ def end_game(request, room_code):
         return redirect('game_play', room_code=room_code)
     # End the game using the service
     GameService.end_game_early(game)
+    invalidate_game_status_cache(room_code)
     messages.success(request, "Game ended early!")
     return redirect('game_results', room_code=room_code)
