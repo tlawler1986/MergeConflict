@@ -192,6 +192,16 @@ def edit_profile(request):
             return redirect('edit_profile')
     else:
         form = ProfileEditForm(instance=request.user)
+    
+    # Ensure user has stats
+    from .models import UserStats
+    UserStats.objects.get_or_create(user=request.user)
+    
+    # Clear any stale messages (temporary fix - remove after deployment)
+    storage = messages.get_messages(request)
+    for _ in storage:
+        pass  # This consumes and clears all messages
+    
     return render(request, 'edit_profile.html', {'form': form})
 
 @login_required
@@ -243,7 +253,7 @@ def game_play(request, room_code):
         player = game.players.get(user=request.user)
     except GamePlayer.DoesNotExist:
         messages.error(request, "You are not in this game")
-        return redirect('room_list')
+        return redirect('dashboard')
 
     # Get current round
     current_round = game.rounds.order_by('-round_number').first()
@@ -418,6 +428,42 @@ def kick_player(request, room_code, user_id):
         messages.error(request, "Player not found in this room")
     
     return redirect('room', room_code=room_code)
+
+@login_required
+def lobby_status(request, room_code):
+    """Get lobby status for AJAX polling"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+    
+    # Check if user is still a member
+    if not room.memberships.filter(user=request.user, is_active=True).exists():
+        return JsonResponse({'error': 'Not a member', 'redirect': 'dashboard'})
+    
+    # Check if game started
+    try:
+        game = room.game
+        if game.status == 'active':
+            return JsonResponse({
+                'game_status': 'active',
+                'redirect': f'/room/{room_code}/play/'
+            })
+    except Game.DoesNotExist:
+        pass
+    
+    # Get current players
+    players = []
+    for membership in room.memberships.filter(is_active=True).select_related('user'):
+        players.append({
+            'id': membership.user.id,
+            'username': membership.user.username,
+            'is_creator': membership.user == room.creator,
+            'avatar_url': membership.user.avatar_url.url if membership.user.avatar_url else None
+        })
+    
+    return JsonResponse({
+        'player_count': len(players),
+        'players': players,
+        'game_status': 'waiting'
+    })
 
 def game_status(request, room_code):
     """Get current game status for polling"""

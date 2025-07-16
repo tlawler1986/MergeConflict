@@ -17,6 +17,24 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+class UserStats(models.Model):
+    """Track user game statistics"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='stats')
+    games_played = models.IntegerField(default=0)
+    games_won = models.IntegerField(default=0)
+    total_score = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    @property
+    def win_percentage(self):
+        if self.games_played == 0:
+            return 0
+        return round((self.games_won / self.games_played) * 100, 1)
+    
+    def __str__(self):
+        return f"{self.user.username} Stats"
+
 class Room(models.Model):
     room_code = models.CharField(max_length=6, unique=True)
     name = models.CharField(max_length=100)
