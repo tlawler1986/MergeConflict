@@ -76,12 +76,13 @@ class CardsAPIClient:
     
     if not black_cards_pool:
       all_cards = self.get_cards(packs)
-      black_cards_pool = all_cards.get('black', [])
+      all_black_cards = all_cards.get('black', [])
+      black_cards_pool = [card for card in all_black_cards if card.get('pick', 1) == 1]
       # Cache the pool for 30 minutes
       cache.set(cache_key, black_cards_pool, 1800)
     
     if len(black_cards_pool) < count:
-      logger.warning(f"Only {len(black_cards_pool)} black cards available, requested {count}")
+      logger.warning(f"Only {len(black_cards_pool)} black cards with pick=1 available, requested {count}")
       return black_cards_pool
     
     import random
