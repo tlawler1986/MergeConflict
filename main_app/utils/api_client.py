@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 class CardsAPIClient:
   BASE_URL = "https://restagainsthumanity.com/api/v2"
 
+  DEFAULT_PACKS = ["CAH Base Set", "CAH: First Expansion", "CAH: Second Expansion", "CAH: Third Expansion"]
+
   def __init__(self):
     self.session = requests.Session()
     self.session.headers.update({
@@ -34,9 +36,9 @@ class CardsAPIClient:
     return packs
 
   def get_cards(self, packs=None):
-    """Fetch cards from specified packs (defaults to Geek Pack)"""
+    """Fetch cards from specified packs (defaults to 4 CAH packs)"""
     if packs is None:
-      packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
+      packs = self.DEFAULT_PACKS
     
     # Create cache key from pack names (sanitize for memcached compatibility)
     pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
@@ -65,7 +67,7 @@ class CardsAPIClient:
   def get_black_cards(self, count=1, packs=None):
     """Get random black cards (questions) with improved caching"""
     if packs is None:
-      packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
+      packs = self.DEFAULT_PACKS
     
     # Check if we have cached black cards (sanitize for memcached compatibility)
     pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
@@ -74,12 +76,13 @@ class CardsAPIClient:
     
     if not black_cards_pool:
       all_cards = self.get_cards(packs)
-      black_cards_pool = all_cards.get('black', [])
+      all_black_cards = all_cards.get('black', [])
+      black_cards_pool = [card for card in all_black_cards if card.get('pick', 1) == 1]
       # Cache the pool for 30 minutes
       cache.set(cache_key, black_cards_pool, 1800)
     
     if len(black_cards_pool) < count:
-      logger.warning(f"Only {len(black_cards_pool)} black cards available, requested {count}")
+      logger.warning(f"Only {len(black_cards_pool)} black cards with pick=1 available, requested {count}")
       return black_cards_pool
     
     import random
@@ -88,7 +91,7 @@ class CardsAPIClient:
   def get_white_cards(self, count=10, packs=None):
     """Get random white cards (answers) with improved caching"""
     if packs is None:
-      packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
+      packs =  self.DEFAULT_PACKS
     
     # Check if we have cached white cards (sanitize for memcached compatibility)
     pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
@@ -110,12 +113,7 @@ class CardsAPIClient:
 
   def _get_fallback_packs(self):
     """Fallback pack list if API is down"""
-    return [
-      "Geek Pack",
-      "Science Pack",
-      "World Wide Web Pack",
-      "CAH Base Set"
-    ]
+    return self.DEFAULT_PACKS
 
   def _get_fallback_cards(self):
     """Backup cards if API is down"""
