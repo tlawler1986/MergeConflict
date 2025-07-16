@@ -339,29 +339,86 @@
 
 {% block extra_js %}
 <script>
-    // Check for game status and player updates every 3 seconds
-    setInterval(function() {
-        // Check if a game exists for this room
-        fetch("{% url 'game_status' room.room_code %}")
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
+let lastPlayerCount = {{ player_count }};
+
+function updateLobby() {
+    fetch("{% url 'lobby_status' room.room_code %}")
+        .then(response => response.json())
+        .then(data => {
+            // Handle errors or redirects
+            if (data.error || data.redirect) {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
                 }
-                throw new Error('Game status check failed');
-            })
-            .then(data => {
-                // If game is active, redirect to game page
-                if (data.game_status === 'active') {
-                    window.location.href = "{% url 'game_play' room.room_code %}";
-                } else {
-                    // Otherwise just refresh to show new players
-                    location.reload();
+                return;
+            }
+            
+            // Update player count if changed
+            if (data.player_count !== lastPlayerCount) {
+                lastPlayerCount = data.player_count;
+                
+                // Update player count in header
+                const playerHeader = document.querySelector('.players-section h2');
+                if (playerHeader) {
+                    playerHeader.textContent = `Players (${data.player_count}/{{ room.max_players }})`;
                 }
-            })
-            .catch(error => {
-                // If no game exists yet or error, just refresh the page
-                location.reload();
-            });
-    }, 3000); // Check every 3 seconds
+                
+                // Update player list
+                const playerList = document.querySelector('.player-list');
+                playerList.innerHTML = '';
+                
+                data.players.forEach(player => {
+                    const playerCard = document.createElement('div');
+                    playerCard.className = 'player-card';
+                    if (player.is_creator) {
+                        playerCard.classList.add('host');
+                    }
+                    
+                    const playerName = document.createElement('div');
+                    playerName.className = 'player-name';
+                    playerName.textContent = player.username;
+                    
+                    const playerStatus = document.createElement('div');
+                    playerStatus.className = 'player-status';
+                    playerStatus.textContent = player.is_creator ? 'Room Creator • Ready' : 'Ready';
+                    
+                    playerCard.appendChild(playerName);
+                    playerCard.appendChild(playerStatus);
+                    
+                    // Add kick button if current user is creator and this isn't their own card
+                    {% if is_creator %}
+                    if (player.id !== {{ request.user.id }}) {
+                        const form = document.createElement('form');
+                        form.method = 'post';
+                        form.action = `/room/{{ room.room_code }}/kick/${player.id}/`;
+                        form.style.display = 'inline';
+                        
+                        const csrfToken = document.createElement('input');
+                        csrfToken.type = 'hidden';
+                        csrfToken.name = 'csrfmiddlewaretoken';
+                        csrfToken.value = '{{ csrf_token }}';
+                        
+                        const kickButton = document.createElement('button');
+                        kickButton.type = 'submit';
+                        kickButton.className = 'kick-button';
+                        kickButton.textContent = 'Kick';
+                        
+                        form.appendChild(csrfToken);
+                        form.appendChild(kickButton);
+                        playerCard.appendChild(form);
+                    }
+                    {% endif %}
+                    
+                    playerList.appendChild(playerCard);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Lobby update failed:', error);
+        });
+}
+
+// Poll every 3 seconds
+setInterval(updateLobby, 3000);
 </script>
 {% endblock %}
