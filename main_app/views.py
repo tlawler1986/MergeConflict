@@ -2,6 +2,8 @@ import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import DetailView, ListView
+from django.db.models import Q, Count
+from django.core.paginator import Paginator
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
@@ -54,6 +56,58 @@ def dashboard(request):
         'user_rooms': user_rooms,
     }
     return render(request, 'dashboard.html', context)
+
+@login_required
+def room_list(request):
+    """Display all rooms with search and filter"""
+    # Get query parameters
+    search_query = request.GET.get('search', '')
+    filter_type = request.GET.get('filter', 'all')  # all, mine, active
+    
+    # Base queryset
+    rooms = Room.objects.filter(is_active=True).annotate(
+        player_count=Count('memberships', filter=Q(memberships__is_active=True))
+    ).select_related('creator')
+    
+    # Apply filters
+    if search_query:
+        rooms = rooms.filter(
+            Q(name__icontains=search_query) | 
+            Q(room_code__icontains=search_query) |
+            Q(creator__username__icontains=search_query)
+        )
+    
+    if filter_type == 'mine':
+        rooms = rooms.filter(
+            memberships__user=request.user,
+            memberships__is_active=True
+        )
+    elif filter_type == 'active':
+        rooms = rooms.filter(game__status='active')
+    
+    # Order by most recent
+    rooms = rooms.order_by('-created_at')
+    
+    # Paginate
+    paginator = Paginator(rooms, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get user's recent rooms
+    recent_rooms = Room.objects.filter(
+        memberships__user=request.user,
+        memberships__is_active=True,
+        is_active=True
+    ).order_by('-memberships__joined_at')[:5]
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'filter_type': filter_type,
+        'recent_rooms': recent_rooms,
+    }
+    
+    return render(request, 'room_list.html', context)
 
 @login_required
 def join_room(request):
@@ -444,7 +498,7 @@ def lobby_status(request, room_code):
         if game.status == 'active':
             return JsonResponse({
                 'game_status': 'active',
-                'redirect': f'/room/{room_code}/play/'
+                'redirect': f'/room/{room_code}/game/'
             })
     except Game.DoesNotExist:
         pass
