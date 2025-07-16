@@ -199,5 +199,8 @@ CACHE_TTL = {
     'api_default': 600,    # 10 minutes default
 }
 
-import django_on_heroku
-django_on_heroku.settings(locals())
+# Configure Django for Heroku deployment only when running on Heroku
+import os
+if 'DYNO' in os.environ:
+    import django_on_heroku
+    django_on_heroku.settings(locals())
