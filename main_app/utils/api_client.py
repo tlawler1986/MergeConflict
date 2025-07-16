@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 class CardsAPIClient:
   BASE_URL = "https://restagainsthumanity.com/api/v2"
 
+  DEFAULT_PACKS = ["CAH Base Set", "CAH: First Expansion", "CAH: Second Expansion", "CAH: Third Expansion"]
+
   def __init__(self):
     self.session = requests.Session()
     self.session.headers.update({
