@@ -507,6 +507,24 @@
                     </div>
                 </div>
             </div> -->
+            
+            <hr style="margin: 30px 0;">
+            
+            <h3>Your Recent Rooms</h3>
+            <div style="text-align: left; margin-bottom: 20px;">
+                {% for room in user_rooms|slice:":5" %}
+                <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; cursor: pointer;" 
+                     onclick="window.location.href='{% url 'room' room.room_code %}'">
+                    <strong>{{ room.name }}</strong><br>
+                    <span style="font-family: 'Courier New', monospace;">{{ room.room_code }}</span> • Host: {{ room.creator.username }}
+                </div>
+                {% empty %}
+                <p style="color: #666;">No recent rooms</p>
+                {% endfor %}
+            </div>
+            <div style="text-align: center;">
+                <a href="{% url 'room_list' %}" class="action-button" style="text-decoration: none; display: inline-block; padding: 10px 20px;">Browse All Rooms</a>
+            </div>
         </div>
     </div>
     
