@@ -67,7 +67,7 @@ class CardsAPIClient:
   def get_black_cards(self, count=1, packs=None):
     """Get random black cards (questions) with improved caching"""
     if packs is None:
-      packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
+      packs = self.DEFAULT_PACKS
     
     # Check if we have cached black cards (sanitize for memcached compatibility)
     pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
