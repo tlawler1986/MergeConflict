@@ -38,25 +38,58 @@ class GameService:
 
   @staticmethod
   def deal_white_cards(player, count=10):
-    """Deal white cards to a player"""
+    """Deal white cards to a player, ensuring no duplicates across the game"""
     # Get current hand size
     current_hand = player.card_hand or []
     needed_cards = count - len(current_hand)
 
     if needed_cards > 0:
-      # Fetch new white cards from API
-      white_cards = cards_api.get_white_cards(count=needed_cards)
-
+      # Get the game and track dealt cards
+      game = player.game
+      dealt_cards = set(game.dealt_white_cards or [])
+      
+      # Also get cards currently in all players' hands to avoid duplicates
+      all_player_cards = set()
+      for p in game.players.all():
+        if p.card_hand:
+          all_player_cards.update(card['text'] for card in p.card_hand)
+      
+      # Combine dealt cards with current player cards
+      all_used_cards = dealt_cards | all_player_cards
+      
+      # Keep fetching cards until we have enough unique ones
+      unique_cards = []
+      attempts = 0
+      max_attempts = 5  # Prevent infinite loop
+      
+      while len(unique_cards) < needed_cards and attempts < max_attempts:
+        # Fetch more cards than needed to account for duplicates
+        fetch_count = (needed_cards - len(unique_cards)) * 2
+        white_cards = cards_api.get_white_cards(count=fetch_count)
+        
+        # Filter out duplicates
+        for card in white_cards:
+          if card['text'] not in all_used_cards and len(unique_cards) < needed_cards:
+            unique_cards.append(card)
+            all_used_cards.add(card['text'])
+        
+        attempts += 1
+      
       # Add to player's hand
-      for card in white_cards:
-          current_hand.append({
-            'id': str(random.randint(10000, 99999)),  # Generate unique ID
-            'text': card['text'],
-            'pack': card.get('pack', 'Unknown')
-          })
+      for card in unique_cards:
+        current_hand.append({
+          'id': str(random.randint(10000, 99999)),  # Generate unique ID
+          'text': card['text'],
+          'pack': card.get('pack', 'Unknown')
+        })
 
+      # Update player's hand
       player.card_hand = current_hand
       player.save()
+      
+      # Update game's dealt cards list
+      game.dealt_white_cards = list(dealt_cards | set(card['text'] for card in unique_cards))
+      game.save()
 
   @staticmethod
   @transaction.atomic
