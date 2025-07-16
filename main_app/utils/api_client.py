@@ -36,9 +36,9 @@ class CardsAPIClient:
     return packs
 
   def get_cards(self, packs=None):
-    """Fetch cards from specified packs (defaults to Geek Pack)"""
+    """Fetch cards from specified packs (defaults to 4 CAH packs)"""
     if packs is None:
-      packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
+      packs = self.DEFAULT_PACKS
     
     # Create cache key from pack names (sanitize for memcached compatibility)
     pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
