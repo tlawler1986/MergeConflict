@@ -91,7 +91,7 @@ class CardsAPIClient:
   def get_white_cards(self, count=10, packs=None):
     """Get random white cards (answers) with improved caching"""
     if packs is None:
-      packs = ["Geek Pack"]  # DEFAULT TO GEEK PACK
+      packs =  self.DEFAULT_PACKS
     
     # Check if we have cached white cards (sanitize for memcached compatibility)
     pack_string = '_'.join(sorted(packs)).replace(' ', '_').replace(':', '')
