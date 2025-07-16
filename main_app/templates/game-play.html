@@ -188,6 +188,7 @@
         text-align: left;
         cursor: pointer;
         transition: transform 0.2s ease;
+        animation: slideIn 0.3s ease-out;
     }
 
     .submitted-card:hover {
@@ -320,6 +321,17 @@
             font-size: 12px;
         }
     }
+
+    @keyframes slideIn {
+      from {
+          opacity: 0;
+          transform: translateX(-20px);
+      }
+      to {
+          opacity: 1;
+          transform: translateX(0);
+      }
+    }
 </style>
 
 
@@ -436,6 +448,36 @@ let currentRoundNumber = {{ current_round.round_number|default:0 }};
 let isJudge = {{ is_judge|lower }};
 let selectedCardId = null;
 
+// Function to update submission display
+  function updateSubmissionDisplay(submissionCount, totalPlayers) {
+      // Update the submission count text
+      const submissionTitle = document.querySelector('.submissions-title');
+      if (submissionTitle && currentRoundStatus === 'card_selection') {
+          const expectedSubmissions = totalPlayers - 1; // Minus the judge
+          submissionTitle.innerHTML = `Submitted Cards (${submissionCount}/${expectedSubmissions} players)`;
+      }
+
+      // Update card backs display
+      const submittedCardsDiv = document.querySelector('.submitted-cards');
+      if (submittedCardsDiv && currentRoundStatus === 'card_selection') {
+          const expectedSubmissions = totalPlayers - 1;
+          let cardsHtml = '';
+
+          // Add card backs for submitted cards
+          for (let i = 0; i < submissionCount; i++) {
+              cardsHtml += '<div class="submitted-card" style="background-color: #666; color: #ccc;">Card 
+  submitted</div>';
+          }
+
+          // Add waiting placeholder if needed
+          if (submissionCount < expectedSubmissions) {
+              cardsHtml += '<div class="waiting-placeholder">Waiting for more submissions...</div>';
+          }
+
+          submittedCardsDiv.innerHTML = cardsHtml;
+      }
+  }
+
 // Only start polling if not judging or not the judge
 if (!(isJudge && currentRoundStatus === 'judging')) {
     // Poll for game status updates every 3 seconds
@@ -450,9 +492,16 @@ if (!(isJudge && currentRoundStatus === 'judging')) {
                     window.location.href = "{% url 'game_results' room.room_code %}";
                     return;
                 }
-                // Only reload if something actually changed
-                if (data.round_status !== currentRoundStatus ||
-                    data.round_number !== currentRoundNumber) {
+
+                // Update submission display if count changed
+                if (data.submissions_count !== currentSubmissionCount && currentRoundStatus === 'card_selection') {
+                    console.log(`Submission count changed: ${currentSubmissionCount} -> ${data.submissions_count}`);
+                    currentSubmissionCount = data.submissions_count;
+                    updateSubmissionDisplay(data.submissions_count, data.total_players);
+                }
+
+                // Only reload if phase changed
+                if (data.round_status !== currentRoundStatus || data.round_number !== currentRoundNumber) {
                     console.log('Reloading: status or round changed');
                     location.reload();
                 }
