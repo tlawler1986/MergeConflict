@@ -89,7 +89,7 @@
                 {% endfor %}
             {% elif current_round.status == 'card_selection' %}
                 {% for submission in submissions %}
-                    <div class="submitted-card" style="background-color: #666; color: #ccc;">
+                    <div class="submitted-card card-appear" style="background-color: #666; color: #ccc;">
                         Card submitted
                     </div>
                 {% endfor %}
@@ -144,23 +144,46 @@ let totalPlayers = {{ players|length }};
           submissionTitle.innerHTML = `Submitted Cards (${submissionCount}/${expectedSubmissions} players)`;
       }
 
-      // Update card backs display
+      // Update card backs display with animation
       const submittedCardsDiv = document.querySelector('.submitted-cards');
       if (submittedCardsDiv && currentRoundStatus === 'card_selection') {
           const expectedSubmissions = totalPlayers - 1;
-          let cardsHtml = '';
-
-          // Add card backs for submitted cards
-          for (let i = 0; i < submissionCount; i++) {
-              cardsHtml += '<div class="submitted-card" style="background-color: #666; color: #ccc;">Card submitted</div>';
+          const currentCards = submittedCardsDiv.querySelectorAll('.submitted-card').length;
+          
+          // Only add new cards if submission count increased
+          if (submissionCount > currentCards) {
+              // Remove waiting placeholder if it exists
+              const placeholder = submittedCardsDiv.querySelector('.waiting-placeholder');
+              if (placeholder) {
+                  placeholder.remove();
+              }
+              
+              // Add new card(s) with animation
+              for (let i = currentCards; i < submissionCount; i++) {
+                  const newCard = document.createElement('div');
+                  newCard.className = 'submitted-card card-animation';
+                  newCard.style.backgroundColor = '#666';
+                  newCard.style.color = '#ccc';
+                  newCard.textContent = 'Card submitted';
+                  submittedCardsDiv.appendChild(newCard);
+                  
+                  // Trigger animation
+                  setTimeout(() => {
+                      newCard.classList.add('card-appear');
+                  }, 10);
+              }
           }
-
-          // Add waiting placeholder if needed
+          
+          // Add or update waiting placeholder if needed
           if (submissionCount < expectedSubmissions) {
-              cardsHtml += '<div class="waiting-placeholder">Waiting for more submissions...</div>';
+              const existingPlaceholder = submittedCardsDiv.querySelector('.waiting-placeholder');
+              if (!existingPlaceholder) {
+                  const placeholder = document.createElement('div');
+                  placeholder.className = 'waiting-placeholder';
+                  placeholder.textContent = 'Waiting for more submissions...';
+                  submittedCardsDiv.appendChild(placeholder);
+              }
           }
-
-          submittedCardsDiv.innerHTML = cardsHtml;
       }
   }
 
