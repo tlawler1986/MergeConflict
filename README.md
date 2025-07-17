@@ -35,12 +35,15 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 - **User Authentication**: Register, login, logout with Django auth
 - **Room Management**: Create permanent rooms with 6-digit codes
+- **Room Browser**: Search and filter active rooms, see recent rooms based on membership
 - **Multiplayer Gameplay**: 3-10 players per game
-- **Card System**: Integration with REST Against Humanity API (select packs, deal cards,etc.)
+- **Card System**: Integration with REST Against Humanity API and GitHub sources
+- **Card Pack Selection**: Organized categories (Default, REST API, GitHub) with multi-select
 - **Judge Rotation**: Fair turn-based judging system
 - **Scoring System**: Track wins and game progression
 - **Room Creator Controls**: Kick players, edit scores, end games early
-- **Responsive Design**: Mobile-friendly interface
+- **Profile Management**: Upload avatars, edit username and profile details
+- **Responsive Design**: Two-column layout with mobile-friendly interface
 
 ### Icebox Features (Future Releases)
 
@@ -56,14 +59,16 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 ### Database Design
 
 ```
-7 Core Entities (MVP):
+9 Core Entities (MVP):
 ├── User (Django built-in + custom fields)
 ├── Room (permanent rooms with settings)
 ├── RoomMembership (M:M join table)
 ├── Game (1:1 with Room)
 ├── GamePlayer (player scores and hands)
 ├── Round (individual game rounds)
-└── CardSubmission (player responses)
+├── CardSubmission (player responses)
+├── CardPack (card pack metadata)
+└── Card (individual cards with pack relationship)
 
 8 Additional Entities (Icebox):
 ├── GameSummary (game history)
@@ -98,8 +103,8 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-team/merge-conflict.git
-cd merge-conflict
+git clone https://github.com/JohnnieBarron/MergeConflict.git
+cd MergeConflict
 
 # Install dependencies
 pip install -r requirements.txt
@@ -117,15 +122,22 @@ python manage.py createsuperuser
 
 # Start development server
 python manage.py runserver
+
+# Optional: Import card data from additional sources
+# Import cards from Against Humanity GitHub repository
+python manage.py import_github_cards
 ```
 
 ### Environment Variables
 
 ```
-SECRET_KEY=your-secret-key
+SECRET_KEY=your-secret-key-here
 DEBUG=True
-DATABASE_URL=postgresql://username:password@localhost/merge_conflict
-CARDS_API_URL=https://restagainsthumanity.com/api/v2/
+DB_USER=your-database-username
+DB_PW=your-database-password
+DB_HOST=your-database-host
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-email-password
 ```
 
 ## 🎯 MVP User Stories
@@ -202,25 +214,26 @@ CARDS_API_URL=https://restagainsthumanity.com/api/v2/
 
 ## 📱 API Documentation
 
-### Cards Against Humanity API
+### REST Against Humanity API
 
 ```python
-# Base URL
-CARDS_API_URL = "https://restagainsthumanity.com/api/v2/"
+# REST API Base URL
+REST_API_URL = "https://restagainsthumanity.com/api/v2/"
 
-# Available Endpoints
+# GraphQL API URL
+GRAPHQL_API_URL = "https://www.restagainsthumanity.com/api/graphql"
+
+# Available REST Endpoints
 GET /packs - List available card packs
-GET /?packs=pack1,pack2 - Get cards from specific packs
+GET /cards?packs=pack1,pack2 - Get cards from specific packs
+```
 
-# Example Response
-{
-  "white": [
-    {"id": "w001", "text": "A disappointing birthday party."}
-  ],
-  "black": [
-    {"id": "b001", "text": "Step 1: ____. Step 2: ____. Step 3: Profit."}
-  ]
-}
+### Against Humanity (GitHub)
+
+```python
+# Repository with JSON card data
+# https://github.com/nodanaonlyzuul/against-humanity
+# Contains cards.json with original CAH cards organized by expansion
 ```
 
 ## 🔒 Security Considerations
@@ -233,7 +246,10 @@ GET /?packs=pack1,pack2 - Get cards from specific packs
 
 ## 📈 Performance Optimizations
 
-- **Card Caching**: Local storage of API responses
+- **Card Storage**: Cards stored locally in PostgreSQL database for fast access
+- **Query Optimization**: Database queries optimized with select_related/prefetch_related
+- **Game Status Caching**: 30-second cache for game state to reduce database hits
+- **Bulk Operations**: Card imports use bulk_create for efficiency
 - **Database Indexing**: Optimized queries for game operations
 - **Static Files**: Efficient CSS/JS delivery
 - **Session Management**: Lightweight game state storage
@@ -259,6 +275,10 @@ GET /?packs=pack1,pack2 - Get cards from specific packs
 
 This project is created for educational purposes as part of the General Assembly Software Engineering Bootcamp.
 
+## 📸 Screenshots
+
+*Screenshots coming soon - showcasing game lobby, active gameplay, and room management features.*
+
 ## 🙏 Acknowledgments
 
 - **Cards Against Humanity**: Original game concept and inspiration (https://www.cardsagainsthumanity.com/)
@@ -275,7 +295,7 @@ This project is created for educational purposes as part of the General Assembly
 ## 📞 Contact
 
 **Project Team**: General Assembly Software Engineering Cohort
-**Repository**: https://github.com/your-team/merge-conflict
+**Repository**: https://github.com/JohnnieBarron/MergeConflict
 **Live Demo**: https://merge-conflict-game.herokuapp.com
 
 ------
