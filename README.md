@@ -17,14 +17,14 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 **Team:** 4-person General Assembly Software Engineering Bootcamp project 
 
-- [Shawn Hank](https://github.com/shawnhank)
-- [Tim Lawler](https://github.com/tlawler1986)
-- [Gerardo Sanchez](https://github.com/gerardosdl)
-- [Johnnie Barron](https://github.com/JohnnieBarron)
+- [Shawn Hank](https://github.com/shawnhank) - Project Manager, Planning, Front End
+- [Tim Lawler](https://github.com/tlawler1986) - Models, Database, Backend 
+- [Gerardo Sanchez](https://github.com/gerardosdl) - Game Logic, API
+- [Johnnie Barron](https://github.com/JohnnieBarron) - Git Manager, Models, Auth
 
 ---
 
- **Tech Stack:** Django, PostgreSQL, Javascript, HTML/CSS
+ **Tech Stack:** Django, Python, PostgreSQL, Javascript, HTML/CSS
  **Deployment:** Heroku
 
 ---
@@ -187,12 +187,7 @@ CARDS_API_URL=https://restagainsthumanity.com/api/v2/
 3. **Game Lobby**: Player waiting area with settings
 4. **Active Game**: Real-time gameplay interface
 
-## 👥 Team Roles
 
-- **Lead Developer**: Architecture, database design, deployment
-- **Frontend Specialist**: Templates, UI/UX, responsive design
-- **Models & Views**: Django ORM, CRUD operations, forms
-- **Support & Integration**: Authentication, testing, documentation
 
 ## 🚀 Deployment
 
@@ -268,6 +263,7 @@ This project is created for educational purposes as part of the General Assembly
 
 - **Cards Against Humanity**: Original game concept and inspiration (https://www.cardsagainsthumanity.com/)
 - **REST Against Humanity**: API providing card content (https://www.restagainsthumanity.com/2.x/ & https://github.com/celsiusnarhwal/rest-against-humanity)
+- **Against Humanity**: Plain text card files (https://github.com/nodanaonlyzuul/against-humanity)
 - **kay-who-codes**: CSS styling foundation (https://github.com/kay-who-codes/Cards-Against-Humanity)
 - **General Assembly**: Educational framework and support
 - **Neon**: PostgreSQL database hosting

@@ -102,7 +102,7 @@
     <div>
         <button class="draw-black-card" onclick="showRules()">View Game Rules</button>
         {% if user.is_authenticated %}
-            <button class="draw-white-cards" onclick="window.location.href='/room/'">Go to Game Room</button>
+            <button class="draw-white-cards" onclick="window.location.href='/room/'">Dashboard</button>
         {% else %}
             <button class="draw-white-cards" onclick="window.location.href='/accounts/signup/'">Get Started</button>
         {% endif %}

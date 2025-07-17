@@ -31,20 +31,19 @@
         text-align: center;
     }
 
-    /* Search and Filter Section */
-    .search-section {
+    /* All sections use same card style */
+    .card-style {
         background-color: white;
         border: 3px solid black;
         border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
+        padding: 20px;
+        width: 100%;
     }
 
     .search-form {
-        display: grid;
-        grid-template-columns: 2fr 1fr auto;
+        display: flex;
+        flex-direction: column;
         gap: 15px;
-        align-items: end;
     }
 
     .form-group {
@@ -91,19 +90,16 @@
         background-color: #333;
     }
 
-    /* Room Cards Grid */
-    .rooms-grid {
+    /* Room Cards Container - Two Column Layout */
+    .rooms-container {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
+        grid-template-columns: 600px 600px;
+        gap: 30px;
+        margin: 40px auto;
+        justify-content: center;
     }
 
     .room-card {
-        background-color: white;
-        border: 3px solid black;
-        border-radius: 12px;
-        padding: 20px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
@@ -194,14 +190,6 @@
         background-color: #6c757d;
     }
 
-    /* Empty State */
-    .empty-state {
-        background-color: white;
-        border: 3px solid black;
-        border-radius: 12px;
-        padding: 60px 30px;
-        text-align: center;
-    }
 
     .empty-state h2 {
         font-size: 24px;
@@ -280,14 +268,6 @@
         cursor: not-allowed;
     }
 
-    /* Recent Rooms Sidebar */
-    .recent-rooms {
-        background-color: white;
-        border: 3px solid black;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
 
     .recent-rooms h3 {
         font-size: 20px;
@@ -309,14 +289,22 @@
     }
 
     /* Responsive Design */
+    @media (max-width: 1260px) {
+        .rooms-container {
+            grid-template-columns: 1fr;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+    }
+
     @media (max-width: 768px) {
         .search-form {
             grid-template-columns: 1fr;
             gap: 10px;
         }
 
-        .rooms-grid {
-            grid-template-columns: 1fr;
+        .rooms-column {
+            width: 95%;
         }
 
         .room-card {
@@ -334,72 +322,77 @@
 <div class="container">
     <h1>Browse Game Rooms</h1>
     
-    <!-- Search and Filter -->
-    <div class="search-section">
-        <form method="get" class="search-form">
-            <div class="form-group">
-                <label for="search">Search Rooms</label>
-                <input type="text" id="search" name="search" class="form-control" 
-                       placeholder="Search by room name, code, or host..." value="{{ search_query }}">
-            </div>
-            <div class="form-group">
-                <label for="filter">Filter By</label>
-                <select id="filter" name="filter" class="form-select">
-                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Rooms</option>
-                    <option value="mine" {% if filter_type == 'mine' %}selected{% endif %}>My Rooms</option>
-                    <option value="active" {% if filter_type == 'active' %}selected{% endif %}>Active Games</option>
-                </select>
-            </div>
-            <button type="submit" class="btn-search">Search</button>
-        </form>
-    </div>
-
-    <!-- Recent Rooms (if user has any) -->
-    {% if recent_rooms %}
-    <div class="recent-rooms">
-        <h3>Your Recent Rooms</h3>
-        {% for room in recent_rooms %}
-        <div class="recent-room-item" onclick="window.location.href='{% url 'room' room.room_code %}'">
-            <strong>{{ room.name }}</strong> • <span style="font-family: 'Courier New', monospace;">{{ room.room_code }}</span>
+    <!-- Two Column Layout -->
+    <div class="rooms-container">
+        <!-- Search Section -->
+        <div class="card-style">
+                <h3 style="font-size: 20px; margin-bottom: 15px; color: #333;">Search Rooms</h3>
+                <form method="get" class="search-form">
+                    <div class="form-group">
+                        <label for="search">Search</label>
+                        <input type="text" id="search" name="search" class="form-control" 
+                               placeholder="Room name, code, or host..." value="{{ search_query }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter">Filter By</label>
+                        <select id="filter" name="filter" class="form-select">
+                            <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Rooms</option>
+                            <option value="mine" {% if filter_type == 'mine' %}selected{% endif %}>My Rooms</option>
+                            <option value="active" {% if filter_type == 'active' %}selected{% endif %}>Active Games</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-search" style="width: 100%;">Search</button>
+                </form>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    
-    <!-- Room List -->
-    {% if page_obj %}
-    <div class="rooms-grid">
+        
+        <!-- Recent Rooms -->
+        {% if recent_rooms %}
+        <div class="card-style">
+            <h3 style="font-size: 20px; margin-bottom: 15px; color: #333;">Your Recent Rooms</h3>
+            {% for room in recent_rooms %}
+            <div class="recent-room-item" onclick="window.location.href='{% url 'room' room.room_code %}'">
+                <strong>{{ room.name }}</strong> • <span style="font-family: 'Courier New', monospace;">{{ room.room_code }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card-style" style="text-align: center; padding: 60px 30px;">
+            <h2>No Recent Rooms</h2>
+            <p>Your recently visited rooms will appear here.</p>
+        </div>
+        {% endif %}
+        
+        <!-- Game Rooms -->
         {% for room in page_obj %}
-        <div class="room-card">
-            <div class="room-name">{{ room.name }}</div>
-            <div class="room-code">{{ room.room_code }}</div>
-            <div class="room-info">
-                <strong>Host:</strong> {{ room.creator.username }}
-            </div>
-            <div class="room-info">
-                <strong>Players:</strong> 
-                <span class="player-count {% if room.player_count == room.max_players %}full{% elif room.player_count >= room.max_players|add:'-1' %}almost-full{% endif %}">
-                    {{ room.player_count }}/{{ room.max_players }}
-                </span>
-            </div>
-            <div class="room-info">
-                <strong>Rounds:</strong> {{ room.round_limit }}
-            </div>
-            {% if room.player_count < room.max_players %}
-                <a href="{% url 'room' room.room_code %}" class="btn-join">Join Room</a>
-            {% else %}
-                <button class="btn-join full" disabled>Room Full</button>
-            {% endif %}
+        <div class="room-card card-style">
+                    <div class="room-name">{{ room.name }}</div>
+                    <div class="room-code">{{ room.room_code }}</div>
+                    <div class="room-info">
+                        <strong>Host:</strong> {{ room.creator.username }}
+                    </div>
+                    <div class="room-info">
+                        <strong>Players:</strong> 
+                        <span class="player-count {% if room.player_count == room.max_players %}full{% elif room.player_count >= room.max_players|add:'-1' %}almost-full{% endif %}">
+                            {{ room.player_count }}/{{ room.max_players }}
+                        </span>
+                    </div>
+                    <div class="room-info">
+                        <strong>Rounds:</strong> {{ room.round_limit }}
+                    </div>
+                    {% if room.player_count < room.max_players %}
+                        <a href="{% url 'room' room.room_code %}" class="btn-join">Join Room</a>
+                    {% else %}
+                        <button class="btn-join full" disabled>Room Full</button>
+                    {% endif %}
         </div>
         {% empty %}
-        <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="card-style" style="text-align: center; padding: 60px 30px; grid-column: 1 / -1;">
             <h2>No Rooms Found</h2>
             <p>Be the first to create a room and start playing!</p>
             <a href="{% url 'dashboard' %}" class="btn-create">Create Room</a>
         </div>
         {% endfor %}
     </div>
-    {% endif %}
     
     <!-- Pagination -->
     {% if page_obj.has_other_pages %}

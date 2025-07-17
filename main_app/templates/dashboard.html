@@ -105,7 +105,7 @@
             border: 3px solid black;
             border-radius: 12px;
             padding: 30px;
-            width: 400px;
+            width: 600px;
             min-height: 350px;
             display: flex;
             flex-direction: column;
@@ -117,7 +117,7 @@
             border: 3px solid black;
             border-radius: 12px;
             padding: 30px;
-            width: 500px;
+            width: 600px;
             min-height: 500px;
             display: flex;
             flex-direction: column;
@@ -263,6 +263,7 @@
             gap: 10px;
             margin: 15px 0;
             align-items: center;
+            justify-content: center;
             flex-wrap: wrap;
         }
 
@@ -315,7 +316,7 @@
             
             .room-section, .pack-section {
                 width: 90%;
-                max-width: 500px;
+                max-width: 600px;
             }
             
             .settings-grid {
@@ -428,8 +429,8 @@
                 <div class="form-group">
                     <label for="turn-timer">Turn Timer:</label>
                     <select id="turn-timer" name="turn-timer">
-                        <option value="2">2 Minutes</option>
-                        <option value="3" selected>3 Minutes</option>
+                        <option value="2" selected>2 Minutes</option>
+                        <option value="3">3 Minutes</option>
                         <option value="4">4 Minutes</option>
                         <option value="5">5 Minutes</option>
                     </select>
@@ -443,17 +444,51 @@
                     <div class="pack-controls" style="margin-bottom: 10px;">
                         <button type="button" class="select-button" onclick="selectAllPacks()">Select All</button>
                         <button type="button" class="select-button" onclick="clearAllPacks()">Clear All</button>
-                        <button type="button" class="select-button" onclick="selectRecommendedPacks()">Recommended</button>
+                        <button type="button" class="select-button" onclick="selectRecommendedPacks()">Default</button>
                     </div>
                     
                     <div style="max-height: 200px; overflow-y: auto; border: 2px solid #ddd; border-radius: 8px; padding: 10px; background-color: #f9f9f9;">
-                        {% for pack in card_packs %}
-                        <label style="display: block; padding: 5px; cursor: pointer;">
-                            <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
-                                   id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
-                            <span><strong>{{ pack.name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
-                        </label>
-                        {% endfor %}
+                        <!-- Default Packs -->
+                        {% if default_packs %}
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Default Packs</h4>
+                            {% for pack in default_packs %}
+                            <label style="display: block; padding: 5px; cursor: pointer;">
+                                <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                       id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                                <span><strong>{{ pack.display_name|default:pack.name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- REST Against Humanity API Packs -->
+                        {% if api_packs %}
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">REST Against Humanity API</h4>
+                            {% for pack in api_packs %}
+                            <label style="display: block; padding: 5px; cursor: pointer;">
+                                <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                       id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                                <span><strong>{{ pack.display_name|default:pack.name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Against Humanity GitHub Packs -->
+                        {% if github_packs %}
+                        <div style="margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Against Humanity (GitHub)</h4>
+                            {% for pack in github_packs %}
+                            <label style="display: block; padding: 5px; cursor: pointer;">
+                                <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                       id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                                <span><strong>{{ pack.display_name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="selected-count" id="selected-count" style="margin-top: 10px;">0 packs selected</div>
                 </div>
