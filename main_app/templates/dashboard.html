@@ -435,7 +435,30 @@
                     </select>
                 </div>
                 
-                <button type="submit" class="action-button create-button">
+                <!-- Pack Selection Section (moved inside form) -->
+                <div style="margin-top: 20px;">
+                    <h3>Select Card Packs</h3>
+                    <p style="color: #666; margin-bottom: 10px; font-size: 14px;">Choose which packs to include</p>
+                    
+                    <div class="pack-controls" style="margin-bottom: 10px;">
+                        <button type="button" class="select-button" onclick="selectAllPacks()">Select All</button>
+                        <button type="button" class="select-button" onclick="clearAllPacks()">Clear All</button>
+                        <button type="button" class="select-button" onclick="selectRecommendedPacks()">Recommended</button>
+                    </div>
+                    
+                    <div style="max-height: 200px; overflow-y: auto; border: 2px solid #ddd; border-radius: 8px; padding: 10px; background-color: #f9f9f9;">
+                        {% for pack in card_packs %}
+                        <label style="display: block; padding: 5px; cursor: pointer;">
+                            <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                   id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                            <span><strong>{{ pack.name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="selected-count" id="selected-count" style="margin-top: 10px;">0 packs selected</div>
+                </div>
+                
+                <button type="submit" class="action-button create-button" style="margin-top: 20px;">
                     Create Room
                 </button>
             </form>
@@ -448,32 +471,6 @@
             </div>
         </div>
         
-        
-        
-        
-        <!-- Pack Selection Section -->
-        <div class="pack-section">
-            <h2>Select Card Packs</h2>
-            <p style="color: #666; margin-bottom: 15px;">Choose which card packs to include in your game</p>
-            
-            <div class="pack-controls">
-                <button class="select-button" onclick="selectAllPacks()">Select All</button>
-                <button class="select-button" onclick="clearAllPacks()">Clear All</button>
-                <button class="select-button" onclick="selectRecommendedPacks()">Recommended</button>
-                <span class="selected-count" id="selected-count">0 packs selected</span>
-            </div>
-            
-            <div class="pack-container" id="pack-container">
-                <div class="loading-spinner" id="loading-spinner">
-                    Loading card packs from API v2...
-                </div>
-            </div>
-            
-            <div style="text-align: left; margin-top: 15px; font-size: 14px; color: #666;">
-                <strong>Note:</strong> More packs = more variety but longer games. 
-                We recommend 2-4 packs for most games.
-            </div>
-        </div>
         
         <!-- Join Room Section -->
         <div class="room-section">
@@ -529,222 +526,63 @@
     </div>
     
     <script>
-        let availablePacks = [];
         let selectedPacks = new Set();
         
-        // Load packs from API on page load
+        // Initialize pack selection on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadCardPacks();
-        });
-        
-        async function loadCardPacks() {
-            try {
-                // Try the API first, but have a fallback list of packs
-                let packNames;
-                
-                try {
-                    const response = await fetch('https://restagainsthumanity.com/api/v2/packs', {
-                        mode: 'cors',
-                        headers: {
-                            'Accept': 'application/json',
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            // Add change listeners to checkboxes
+            document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedPacks.add(parseInt(this.value));
+                    } else {
+                        selectedPacks.delete(parseInt(this.value));
                     }
-                    
-                    packNames = await response.json();
-                } catch (apiError) {
-                    console.warn('API call failed, using fallback pack list:', apiError);
-                    // Fallback pack list based on the actual API response
-                    packNames = [
-                        "CAH Base Set",
-                        "Geek Pack", 
-                        "Science Pack",
-                        "World Wide Web Pack",
-                        "Nerd Bundle: A Few More Cards For You Nerds (Target Exclusive)",
-                        "Food Pack",
-                        "90s Nostalgia Pack",
-                        "CAH: 2000s Nostalgia Pack",
-                        "CAH: A.I. Pack",
-                        "CAH: College Pack",
-                        "CAH: First Expansion",
-                        "CAH: Second Expansion",
-                        "CAH: Third Expansion",
-                        "CAH: Fourth Expansion",
-                        "CAH: Fifth Expansion",
-                        "CAH: Sixth Expansion",
-                        "Fantasy Pack",
-                        "Sci-Fi Pack",
-                        "Weed Pack",
-                        "Period Pack",
-                        "Pride Pack"
-                    ];
-                }
-                
-                // Convert pack names to objects
-                availablePacks = packNames.map((packName, index) => ({
-                    id: index,
-                    name: packName,
-                    description: getPackDescription(packName),
-                    category: getPackCategory(packName),
-                    isRecommended: isRecommendedPack(packName)
-                }));
-                
-                renderPacks();
-                selectRecommendedPacks();
-                
-            } catch (error) {
-                console.error('Error loading packs:', error);
-                document.getElementById('pack-container').innerHTML = 
-                `<div class="error-message">
-                    Failed to load card packs from API.<br>
-                    Error: ${error.message}<br>
-                    <button onclick="loadCardPacks()" style="margin-top: 10px;">Try Again</button>
-                    </div>`;
-                }
-            }
-            
-            function getPackDescription(packName) {
-                const name = packName.toLowerCase();
-                
-                if (name.includes('base set') || name === 'cah base set') {
-                    return 'The original Cards Against Humanity pack with classic cards';
-                } else if (name.includes('expansion')) {
-                    return 'Additional cards to expand your game variety';
-                } else if (name.includes('nerd') || name.includes('geek')) {
-                    return 'Perfect for developers and tech enthusiasts';
-                } else if (name.includes('science')) {
-                    return 'STEM-focused humor and references';
-                } else if (name.includes('web') || name.includes('internet')) {
-                    return 'Internet culture and online memes';
-                } else if (name.includes('food')) {
-                    return 'Culinary themed cards and food humor';
-                } else if (name.includes('holiday') || name.includes('christmas')) {
-                    return 'Seasonal themed cards for special occasions';
-                } else if (name.includes('nostalgia') || name.includes('90s') || name.includes('2000s')) {
-                    return 'Retro references and throwback humor';
-                } else {
-                    return 'Themed pack with unique card combinations';
-                }
-            }
-            
-            function getPackCategory(packName) {
-                const name = packName.toLowerCase();
-                
-                if (name.includes('base')) return 'Core';
-                if (name.includes('expansion')) return 'Expansion';
-                if (name.includes('nerd') || name.includes('geek') || name.includes('science') || name.includes('web')) return 'Tech';
-                if (name.includes('holiday') || name.includes('christmas')) return 'Seasonal';
-                if (name.includes('nostalgia') || name.includes('90s') || name.includes('2000s')) return 'Nostalgia';
-                return 'Themed';
-            }
-            
-            function isRecommendedPack(packName) {
-                const recommended = [
-                    'Geek Pack',
-                    'Science Pack',
-                    'World Wide Web Pack',
-                    'Nerd Bundle: A Few More Cards For You Nerds (Target Exclusive)'
-                ];
-                return recommended.includes(packName);
-            }
-            
-        function renderPacks() {
-            const container = document.getElementById('pack-container');
-            container.innerHTML = '';
-
-            if (availablePacks.length === 0) {
-                container.innerHTML = '<div class="loading-spinner">No packs available</div>';
-                return;
-            }
-
-            // Group packs by category
-            const groupedPacks = availablePacks.reduce((groups, pack) => {
-                const category = pack.category;
-                if (!groups[category]) groups[category] = [];
-                groups[category].push(pack);
-                return groups;
-            }, {});
-
-            // Render each category
-            Object.entries(groupedPacks).forEach(([category, packs]) => {
-                const categoryHeader = document.createElement('div');
-                categoryHeader.style.cssText = 'font-weight: bold; margin: 15px 0 8px 0; color: #333; font-size: 14px;';
-                categoryHeader.textContent = `${category} Packs`;
-                container.appendChild(categoryHeader);
-
-                packs.forEach(pack => {
-                    const packElement = document.createElement('div');
-                    packElement.className = 'pack-item';
-                    if (selectedPacks.has(pack.id)) {
-                        packElement.classList.add('selected');
-                    }
-                    
-                    packElement.onclick = () => togglePack(pack.id);
-                    
-                    packElement.innerHTML = `
-                        <input type="checkbox" class="pack-checkbox" id="pack-${pack.id}" 
-                               ${selectedPacks.has(pack.id) ? 'checked' : ''} 
-                               onchange="togglePack(${pack.id})">
-                        <div class="pack-info">
-                            <div class="pack-name">
-                                ${pack.name} 
-                                ${pack.isRecommended ? '⭐' : ''}
-                            </div>
-                            <div class="pack-description">${pack.description}</div>
-                            <div class="pack-stats">
-                                Category: ${pack.category} 
-                                ${pack.isRecommended ? '• Recommended for devs' : ''}
-                            </div>
-                        </div>
-                    `;
-
-                    container.appendChild(packElement);
+                    updateSelectedCount();
                 });
             });
-
-            updateSelectedCount();
-        }
-
-        function togglePack(packId) {
-            if (selectedPacks.has(packId)) {
-                selectedPacks.delete(packId);
-            } else {
-                selectedPacks.add(packId);
-            }
-            renderPacks();
-        }
+            
+            // Pre-select recommended packs
+            selectRecommendedPacks();
+        });
+            
+            
 
         function selectAllPacks() {
-            selectedPacks = new Set(availablePacks.map(pack => pack.id));
-            renderPacks();
+            document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+                selectedPacks.add(parseInt(checkbox.value));
+            });
+            updateSelectedCount();
         }
 
         function clearAllPacks() {
             selectedPacks.clear();
-            renderPacks();
+            document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateSelectedCount();
         }
 
         function selectRecommendedPacks() {
-            selectedPacks.clear();
-            const recommendedPacks = availablePacks
-                .filter(pack => pack.isRecommended)
-                .map(pack => pack.id);
-            
-            selectedPacks = new Set(recommendedPacks);
-            renderPacks();
+            clearAllPacks();
+            // Select packs with "Geek", "Science", "Web", or "Nerd" in the name
+            document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+                const label = checkbox.parentElement;
+                const packName = label.textContent.toLowerCase();
+                if (packName.includes('geek') || packName.includes('science') || 
+                    packName.includes('web') || packName.includes('nerd')) {
+                    checkbox.checked = true;
+                    selectedPacks.add(parseInt(checkbox.value));
+                }
+            });
+            updateSelectedCount();
         }
 
         function updateSelectedCount() {
             const count = selectedPacks.size;
             document.getElementById('selected-count').textContent = 
                 `${count} pack${count !== 1 ? 's' : ''} selected`;
-        }
-
-        function getSelectedPackNames() {
-            return Array.from(selectedPacks).map(id => availablePacks.find(pack => pack.id === id)?.name).filter(Boolean);
         }
 
         // Form handlers

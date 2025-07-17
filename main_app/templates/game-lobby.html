@@ -316,6 +316,23 @@
                     <span>Room Status:</span>
                     <span class="settings-value">Open</span>
                 </div>
+                <div class="settings-item">
+                    <span>Card Packs:</span>
+                    <span class="settings-value">
+                        {% if room.selected_packs.exists %}
+                            {{ room.selected_packs.count }} packs selected
+                        {% else %}
+                            Default packs
+                        {% endif %}
+                    </span>
+                </div>
+                {% if room.selected_packs.exists %}
+                <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                    {% for pack in room.selected_packs.all %}
+                        <div>• {{ pack.name }} ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
 

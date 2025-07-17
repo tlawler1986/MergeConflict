@@ -13,7 +13,7 @@ from .forms import SignUpForm, ProfileEditForm
 from .services import GameService
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership
+from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership, CardPack
 from django.db.models import Max
 from django.core.cache import cache
 
@@ -37,6 +37,7 @@ def dashboard(request):
         max_players = int(request.POST.get('max-players', 8))
         round_limit = int(request.POST.get('round-limit', 10))
         turn_timer = int(request.POST.get('turn-timer', 3)) * 60  # Convert minutes to seconds
+        selected_pack_ids = request.POST.getlist('selected_packs')
         
         room = Room.objects.create(
             name=room_name,
@@ -45,6 +46,11 @@ def dashboard(request):
             round_limit=round_limit,
             turn_time_limit=turn_timer
         )
+        
+        # Add selected packs to the room
+        if selected_pack_ids:
+            room.selected_packs.set(selected_pack_ids)
+        
         # Add creator as member
         RoomMembership.objects.create(
             user=request.user,
@@ -52,8 +58,12 @@ def dashboard(request):
         )
         return redirect('room', room_code=room.room_code)
     
+    # Get available card packs from database
+    card_packs = CardPack.objects.filter(is_active=True).order_by('name')
+    
     context = {
         'user_rooms': user_rooms,
+        'card_packs': card_packs,
     }
     return render(request, 'dashboard.html', context)
 

@@ -35,6 +35,50 @@ class UserStats(models.Model):
     def __str__(self):
         return f"{self.user.username} Stats"
 
+class CardPack(models.Model):
+    """Store card pack information"""
+    name = models.CharField(max_length=200, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    card_count = models.IntegerField(default=0)
+    black_card_count = models.IntegerField(default=0)
+    white_card_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        ordering = ['name']
+
+
+class Card(models.Model):
+    """Store individual cards from the API"""
+    CARD_TYPES = [
+        ('black', 'Black Card'),
+        ('white', 'White Card'),
+    ]
+    
+    text = models.TextField()
+    card_type = models.CharField(max_length=5, choices=CARD_TYPES)
+    pick = models.IntegerField(default=1)  # For black cards: how many white cards to pick
+    pack = models.ForeignKey(CardPack, on_delete=models.CASCADE, related_name='cards')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.card_type}: {self.text[:50]}..."
+    
+    class Meta:
+        unique_together = ('text', 'card_type', 'pack')
+        indexes = [
+            models.Index(fields=['card_type', 'is_active']),
+            models.Index(fields=['pack', 'card_type']),
+        ]
+
+
 class Room(models.Model):
     room_code = models.CharField(max_length=6, unique=True)
     name = models.CharField(max_length=100)
@@ -42,6 +86,7 @@ class Room(models.Model):
     max_players = models.IntegerField(default=8)
     round_limit = models.IntegerField(default=10)
     turn_time_limit = models.IntegerField(default=120)  # seconds
+    selected_packs = models.ManyToManyField(CardPack, related_name='rooms', blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
