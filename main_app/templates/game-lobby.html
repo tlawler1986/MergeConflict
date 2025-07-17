@@ -183,6 +183,22 @@ function updateLobby() {
                     
                     playerList.appendChild(playerCard);
                 });
+                
+                // Update start button state if user is creator
+                {% if is_creator %}
+                const startBtn = document.getElementById('start-btn');
+                if (startBtn) {
+                    if (data.players.length >= 2) {
+                        startBtn.disabled = false;
+                        startBtn.style.backgroundColor = '#28a745';
+                        startBtn.style.borderColor = '#28a745';
+                    } else {
+                        startBtn.disabled = true;
+                        startBtn.style.backgroundColor = '#6c757d';
+                        startBtn.style.borderColor = '#6c757d';
+                    }
+                }
+                {% endif %}
         })
         .catch(error => {
             console.error('Lobby update failed:', error);
