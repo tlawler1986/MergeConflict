@@ -76,7 +76,6 @@ body {
 .logo-img {
     height: 80px;
     width: auto;
-    filter: brightness(0) invert(1); /* Makes the logo white if it's dark */
 }
 
 .logo-img:hover {
