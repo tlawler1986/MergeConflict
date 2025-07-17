@@ -9,6 +9,7 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 **Home Page**
 
+
 ![Home Page](docs/images/home_page.png)
 
 **Home Page Rules**
@@ -31,11 +32,7 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 ![Player Profile with Stats](docs/images/my_profile.png)
 
-
-
 ---
-
-
 
 ## Links
 
