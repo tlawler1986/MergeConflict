@@ -142,15 +142,7 @@ let totalPlayers = {{ players|length }};
           const countSpan = document.querySelector('.submission-count');
           const totalSpan = document.querySelector('.submission-total');
           if (countSpan) {
-              // Add transition effect to the count
-              countSpan.style.transition = 'all 0.3s ease';
               countSpan.textContent = submissionCount;
-              
-              // Add a brief highlight effect
-              countSpan.style.color = '#28a745';
-              setTimeout(() => {
-                  countSpan.style.color = '';
-              }, 300);
           }
           if (totalSpan) {
               totalSpan.textContent = totalPlayers - 1; // Minus the judge
