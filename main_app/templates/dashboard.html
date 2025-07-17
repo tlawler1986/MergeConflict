@@ -1,801 +1,236 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merge Conflict - Room Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends 'base.html' %}
+{% load static %}
 
-        body {
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-color: #f4f4f4;
-            text-align: center;
-            color: black;
-        }
+{% block title %}Merge Conflict - Room Dashboard{% endblock %}
 
-        h1 {
-            font-size: 36px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
 
-        h2 {
-            font-size: 24px;
-            margin: 15px 0;
-            color: #333;
-        }
+{% block content %}
+<!-- Main Dashboard -->
+<h1>Game Dashboard</h1>
 
-        h3 {
-            font-size: 18px;
-            margin: 10px 0;
-            color: #333;
-        }
-
-        .header-bar {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background-color: #3b3b3b;
-            color: white;
-        }
-
-        /* .user-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid white;
-            margin-left: 10px;
-            vertical-align: middle;
-        }
+<div class="dashboard-container">
+    <!-- Create Room Section -->
+    <div class="room-section">
+        <h2>Create New Room</h2>
         
-        .default-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background-color: #666;
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            border: 2px solid white;
-            margin-left: 10px;
-            vertical-align: middle;
-        } */
-
-        .header-link {
-            color: white;
-            font-size: 18px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-left: 20px;
-        }
-
-        .header-link:hover {
-            color: #ccc;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .dashboard-container {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 40px 20px;
-            flex-wrap: wrap;
-        }
-
-        .room-section {
-            background-color: white;
-            border: 3px solid black;
-            border-radius: 12px;
-            padding: 30px;
-            width: 400px;
-            min-height: 350px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        .pack-section {
-            background-color: white;
-            border: 3px solid black;
-            border-radius: 12px;
-            padding: 30px;
-            width: 500px;
-            min-height: 500px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group {
-            margin: 15px 0;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 16px;
-        }
-
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid black;
-            border-radius: 8px;
-            font-size: 16px;
-            background-color: #f9f9f9;
-        }
-
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            background-color: white;
-            border-color: #007acc;
-        }
-
-        .action-button {
-            width: 100%;
-            height: 50px;
-            font-size: 18px;
-            font-weight: bold;
-            margin: 15px 0;
-            cursor: pointer;
-            border: 2px solid black;
-            border-radius: 10px;
-            transition: transform 0.3s ease, background-color 0.3s ease;
-        }
-
-        .create-button {
-            background-color: black;
-            color: white;
-        }
-
-        .join-button {
-            background-color: white;
-            color: black;
-        }
-
-        .action-button:hover {
-            transform: scale(1.05);
-        }
-
-        .room-code-display {
-            background-color: #e8e8e8;
-            border: 2px dashed #666;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        /* Pack Selection Styles */
-        .pack-container {
-            max-height: 350px;
-            overflow-y: auto;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            background-color: #f9f9f9;
-        }
-
-        .pack-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            margin: 8px 0;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            background-color: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .pack-item:hover {
-            border-color: #007acc;
-            background-color: #f0f8ff;
-        }
-
-        .pack-item.selected {
-            border-color: #007acc;
-            background-color: #e6f3ff;
-            box-shadow: 0 0 10px rgba(0, 122, 204, 0.3);
-        }
-
-        .pack-checkbox {
-            margin-right: 12px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .pack-info {
-            flex-grow: 1;
-            text-align: left;
-        }
-
-        .pack-name {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .pack-description {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .pack-stats {
-            font-size: 12px;
-            color: #888;
-        }
-
-        .pack-controls {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .select-button {
-            padding: 8px 16px;
-            border: 2px solid black;
-            border-radius: 6px;
-            background-color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .select-button:hover {
-            background-color: #f0f0f0;
-        }
-
-        .selected-count {
-            font-weight: bold;
-            color: #007acc;
-            margin-left: auto;
-        }
-
-        .loading-spinner {
-            text-align: center;
-            padding: 20px;
-            font-style: italic;
-            color: #666;
-        }
-
-        .error-message {
-            text-align: center;
-            padding: 20px;
-            color: red;
-            font-weight: bold;
-        }
-
-        .success-message {
-            text-align: center;
-            padding: 10px;
-            color: green;
-            font-weight: bold;
-        }
-
-        @media (max-width: 1200px) {
-            .dashboard-container {
-                flex-direction: column;
-                align-items: center;
-            }
+        <form id="create-room-form" method="post" action="{% url 'dashboard' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="room-name">Room Name:</label>
+                <input type="text" id="room-name" name="room_name" placeholder="My Epic Dev Game" required>
+            </div>
             
-            .room-section, .pack-section {
-                width: 90%;
-                max-width: 500px;
-            }
-            
-            .settings-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .pack-section {
-                width: 95%;
-            }
-            
-            .pack-item {
-                padding: 8px;
-            }
-            
-            .pack-name {
-                font-size: 14px;
-            }
-            
-            .pack-description {
-                font-size: 12px;
-            }
-
-            .pack-controls {
-                justify-content: center;
-            }
-
-            .selected-count {
-                margin-left: 0;
-                margin-top: 10px;
-                flex-basis: 100%;
-                text-align: center;
-            }
-        }
-    </style>
-</head>
-<body>
-    {% extends 'base.html' %}
-    {% block content %}
-    <!-- Header -->
-    <!-- <div class="header-bar">
-        <a href="/" class="logo" style="text-decoration: none; color: white;">Merge Conflict</a>
-        <div>
-            <span style="margin-right: 20px;">Welcome, {{ user.username }}!</span>
-            <a href="/profile/edit/" class="header-link">My Profile</a>
-            <a href="/accounts/logout/" class="header-link">Logout</a>
-        </div>
-    </div> -->
-    
-    <!-- <div class="header-bar">
-        <a href="/" class="logo" style="text-decoration: none; color: white;">Merge Conflict</a>
-        <div>
-            {% if user.is_authenticated %}
-            <span style="margin-right: 10px;">Welcome, {{ user.username }}!</span>
-            {% if user.avatar_url %}
-            <img src="{{ user.avatar_url.url }}" alt="Avatar" class="user-avatar">
-            {% else %}
-            <span class="default-avatar">{{ user.username.0|upper }}</span>
-            {% endif %}
-            <a href="/room/" class="header-link" style="margin-left: 20px;">Game Dashboard</a>
-            <a href="/profile/edit/" class="header-link">My Profile</a>
-            <a href="{% url 'account_logout' %}" class="header-link">Logout</a>
-            {% else %}
-            <a href="{% url 'account_login' %}" class="header-link">Login</a>
-            <a href="{% url 'account_signup' %}" class="header-link">Register</a>
-            {% endif %}
-        </div>
-    </div> -->
-    
-    <!-- Main Dashboard -->
-    <h1>Game Dashboard</h1>
-    
-    <div class="dashboard-container">
-        <!-- Create Room Section -->
-        <div class="room-section">
-            <h2>Create New Room</h2>
-            
-            <form id="create-room-form" method="post" action="{% url 'dashboard' %}">
-                {% csrf_token %}
+            <div class="settings-grid">
                 <div class="form-group">
-                    <label for="room-name">Room Name:</label>
-                    <input type="text" id="room-name" name="room_name" placeholder="My Epic Dev Game" required>
-                </div>
-                
-                <div class="settings-grid">
-                    <div class="form-group">
-                        <label for="max-players">Max Players:</label>
-                        <select id="max-players" name="max-players">
-                            <option value="2">2 Players</option>
-                            <option value="3">3 Players</option>
-                            <option value="4">4 Players</option>
-                            <option value="6">6 Players</option>
-                            <option value="8" selected>8 Players</option>
-                            <option value="10">10 Players</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="round-limit">Rounds to Play:</label>
-                        <select id="round-limit" name="round-limit">
-                            <option value="5">5 Rounds</option>
-                            <option value="10" selected>10 Rounds</option>
-                            <option value="15">15 Rounds</option>
-                            <option value="0">Unlimited</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="turn-timer">Turn Timer:</label>
-                    <select id="turn-timer" name="turn-timer">
-                        <option value="2">2 Minutes</option>
-                        <option value="3" selected>3 Minutes</option>
-                        <option value="4">4 Minutes</option>
-                        <option value="5">5 Minutes</option>
+                    <label for="max-players">Max Players:</label>
+                    <select id="max-players" name="max-players">
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4">4 Players</option>
+                        <option value="6">6 Players</option>
+                        <option value="8" selected>8 Players</option>
+                        <option value="10">10 Players</option>
                     </select>
                 </div>
                 
-                <button type="submit" class="action-button create-button">
-                    Create Room
-                </button>
-            </form>
-            
-            <!-- Room Code Display (hidden initially) -->
-            <div id="created-room-code" style="display: none;">
-                <p><strong>Your Room Code:</strong></p>
-                <div class="room-code-display" id="room-code-text">ABC123</div>
-                <p style="font-size: 14px; color: #666;">Share this code with your friends!</p>
-            </div>
-        </div>
-        
-        
-        
-        
-        <!-- Pack Selection Section -->
-        <div class="pack-section">
-            <h2>Select Card Packs</h2>
-            <p style="color: #666; margin-bottom: 15px;">Choose which card packs to include in your game</p>
-            
-            <div class="pack-controls">
-                <button class="select-button" onclick="selectAllPacks()">Select All</button>
-                <button class="select-button" onclick="clearAllPacks()">Clear All</button>
-                <button class="select-button" onclick="selectRecommendedPacks()">Recommended</button>
-                <span class="selected-count" id="selected-count">0 packs selected</span>
-            </div>
-            
-            <div class="pack-container" id="pack-container">
-                <div class="loading-spinner" id="loading-spinner">
-                    Loading card packs from API v2...
+                <div class="form-group">
+                    <label for="round-limit">Rounds to Play:</label>
+                    <select id="round-limit" name="round-limit">
+                        <option value="5">5 Rounds</option>
+                        <option value="10" selected>10 Rounds</option>
+                        <option value="15">15 Rounds</option>
+                        <option value="0">Unlimited</option>
+                    </select>
                 </div>
             </div>
             
-            <div style="text-align: left; margin-top: 15px; font-size: 14px; color: #666;">
-                <strong>Note:</strong> More packs = more variety but longer games. 
-                We recommend 2-4 packs for most games.
+            <div class="form-group">
+                <label for="turn-timer">Turn Timer:</label>
+                <select id="turn-timer" name="turn-timer">
+                    <option value="2" selected>2 Minutes</option>
+                    <option value="3">3 Minutes</option>
+                    <option value="4">4 Minutes</option>
+                    <option value="5">5 Minutes</option>
+                </select>
             </div>
-        </div>
-        
-        <!-- Join Room Section -->
-        <div class="room-section">
-            <h2>Join Existing Room</h2>
             
-            <form id="join-room-form" method="post" action="{% url 'join_room' %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="join-code">Enter Room Code:</label>
-                    <input type="text" id="join-code" name="room_code" placeholder="ABC123" 
-                    style="font-family: 'Courier New', monospace; font-size: 20px; letter-spacing: 2px; text-align: center;" 
-                    maxlength="6" required>
+            <!-- Pack Selection Section (moved inside form) -->
+            <div style="margin-top: 20px;">
+                <h3>Select Card Packs</h3>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">Choose which packs to include</p>
+                
+                <div class="pack-controls" style="margin-bottom: 10px;">
+                    <button type="button" class="select-button" onclick="selectAllPacks()">Select All</button>
+                    <button type="button" class="select-button" onclick="clearAllPacks()">Clear All</button>
+                    <button type="button" class="select-button" onclick="selectRecommendedPacks()">Default</button>
                 </div>
                 
-                <button type="submit" class="action-button join-button">
-                    Join Room
-                </button>
-            </form>
-            
-            <!-- Recent Rooms
-            <div style="margin-top: 30px;">
-                <h3 style="margin-bottom: 15px; color: #333;">Recent Rooms</h3>
-                <div style="text-align: left;">
-                    <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; cursor: pointer;" onclick="quickJoin('DEV456')">
-                        <strong>Debug Party</strong><br>
-                        <span style="font-family: 'Courier New', monospace;">DEV456</span> • 3/8 players
+                <div style="max-height: 200px; overflow-y: auto; border: 2px solid #ddd; border-radius: 8px; padding: 10px; background-color: #f9f9f9;">
+                    <!-- Default Packs -->
+                    {% if default_packs %}
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Default Packs</h4>
+                        {% for pack in default_packs %}
+                        <label style="display: block; padding: 5px; cursor: pointer;">
+                            <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                   id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                            <span><strong>{{ pack.display_name|default:pack.name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                        </label>
+                        {% endfor %}
                     </div>
-                    <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; cursor: pointer;" onclick="quickJoin('GIT789')">
-                        <strong>Merge Hell</strong><br>
-                        <span style="font-family: 'Courier New', monospace;">GIT789</span> • 2/6 players
+                    {% endif %}
+                    
+                    <!-- REST Against Humanity API Packs -->
+                    {% if api_packs %}
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">REST Against Humanity API</h4>
+                        {% for pack in api_packs %}
+                        <label style="display: block; padding: 5px; cursor: pointer;">
+                            <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                   id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                            <span><strong>{{ pack.display_name|default:pack.name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                        </label>
+                        {% endfor %}
                     </div>
+                    {% endif %}
+                    
+                    <!-- Against Humanity GitHub Packs -->
+                    {% if github_packs %}
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px; border-bottom: 1px solid #ddd; padding-bottom: 3px;">Against Humanity (GitHub)</h4>
+                        {% for pack in github_packs %}
+                        <label style="display: block; padding: 5px; cursor: pointer;">
+                            <input type="checkbox" name="selected_packs" value="{{ pack.id }}" 
+                                   id="pack-{{ pack.id }}" class="pack-checkbox" style="margin-right: 8px;">
+                            <span><strong>{{ pack.display_name }}</strong> ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
-            </div> -->
+                <div class="selected-count" id="selected-count" style="margin-top: 10px;">0 packs selected</div>
+            </div>
+            
+            <button type="submit" class="action-button create-button" style="margin-top: 20px;">
+                Create Room
+            </button>
+        </form>
+        
+        <!-- Room Code Display (hidden initially) -->
+        <div id="created-room-code" style="display: none;">
+            <p><strong>Your Room Code:</strong></p>
+            <div class="room-code-display" id="room-code-text">ABC123</div>
+            <p style="font-size: 14px; color: #666;">Share this code with your friends!</p>
         </div>
     </div>
     
-    <script>
-        let availablePacks = [];
-        let selectedPacks = new Set();
+    
+    <!-- Join Room Section -->
+    <div class="room-section">
+        <h2>Join Existing Room</h2>
         
-        // Load packs from API on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCardPacks();
-        });
-        
-        async function loadCardPacks() {
-            try {
-                // Try the API first, but have a fallback list of packs
-                let packNames;
-                
-                try {
-                    const response = await fetch('https://restagainsthumanity.com/api/v2/packs', {
-                        mode: 'cors',
-                        headers: {
-                            'Accept': 'application/json',
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    packNames = await response.json();
-                } catch (apiError) {
-                    console.warn('API call failed, using fallback pack list:', apiError);
-                    // Fallback pack list based on the actual API response
-                    packNames = [
-                        "CAH Base Set",
-                        "Geek Pack", 
-                        "Science Pack",
-                        "World Wide Web Pack",
-                        "Nerd Bundle: A Few More Cards For You Nerds (Target Exclusive)",
-                        "Food Pack",
-                        "90s Nostalgia Pack",
-                        "CAH: 2000s Nostalgia Pack",
-                        "CAH: A.I. Pack",
-                        "CAH: College Pack",
-                        "CAH: First Expansion",
-                        "CAH: Second Expansion",
-                        "CAH: Third Expansion",
-                        "CAH: Fourth Expansion",
-                        "CAH: Fifth Expansion",
-                        "CAH: Sixth Expansion",
-                        "Fantasy Pack",
-                        "Sci-Fi Pack",
-                        "Weed Pack",
-                        "Period Pack",
-                        "Pride Pack"
-                    ];
-                }
-                
-                // Convert pack names to objects
-                availablePacks = packNames.map((packName, index) => ({
-                    id: index,
-                    name: packName,
-                    description: getPackDescription(packName),
-                    category: getPackCategory(packName),
-                    isRecommended: isRecommendedPack(packName)
-                }));
-                
-                renderPacks();
-                selectRecommendedPacks();
-                
-            } catch (error) {
-                console.error('Error loading packs:', error);
-                document.getElementById('pack-container').innerHTML = 
-                `<div class="error-message">
-                    Failed to load card packs from API.<br>
-                    Error: ${error.message}<br>
-                    <button onclick="loadCardPacks()" style="margin-top: 10px;">Try Again</button>
-                    </div>`;
-                }
-            }
+        <form id="join-room-form" method="post" action="{% url 'join_room' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="join-code">Enter Room Code:</label>
+                <input type="text" id="join-code" name="room_code" placeholder="ABC123" 
+                style="font-family: 'Courier New', monospace; font-size: 20px; letter-spacing: 2px; text-align: center;" 
+                maxlength="6" required>
+            </div>
             
-            function getPackDescription(packName) {
-                const name = packName.toLowerCase();
-                
-                if (name.includes('base set') || name === 'cah base set') {
-                    return 'The original Cards Against Humanity pack with classic cards';
-                } else if (name.includes('expansion')) {
-                    return 'Additional cards to expand your game variety';
-                } else if (name.includes('nerd') || name.includes('geek')) {
-                    return 'Perfect for developers and tech enthusiasts';
-                } else if (name.includes('science')) {
-                    return 'STEM-focused humor and references';
-                } else if (name.includes('web') || name.includes('internet')) {
-                    return 'Internet culture and online memes';
-                } else if (name.includes('food')) {
-                    return 'Culinary themed cards and food humor';
-                } else if (name.includes('holiday') || name.includes('christmas')) {
-                    return 'Seasonal themed cards for special occasions';
-                } else if (name.includes('nostalgia') || name.includes('90s') || name.includes('2000s')) {
-                    return 'Retro references and throwback humor';
+            <button type="submit" class="action-button join-button">
+                Join Room
+            </button>
+        </form>
+        
+        <hr style="margin: 30px 0;">
+        
+        <h3>Your Recent Rooms</h3>
+        <div style="text-align: left; margin-bottom: 20px;">
+            {% for room in user_rooms|slice:":5" %}
+            <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; cursor: pointer;" 
+                 onclick="window.location.href='{% url 'room' room.room_code %}'">
+                <strong>{{ room.name }}</strong><br>
+                <span style="font-family: 'Courier New', monospace;">{{ room.room_code }}</span> • Host: {{ room.creator.username }}
+            </div>
+            {% empty %}
+            <p style="color: #666;">No recent rooms</p>
+            {% endfor %}
+        </div>
+        <div style="text-align: center;">
+            <a href="{% url 'room_list' %}" class="action-button" style="text-decoration: none; display: inline-block; padding: 10px 20px;">Browse All Rooms</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedPacks = new Set();
+    
+    // Initialize pack selection on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add change listeners to checkboxes
+        document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    selectedPacks.add(parseInt(this.value));
                 } else {
-                    return 'Themed pack with unique card combinations';
+                    selectedPacks.delete(parseInt(this.value));
                 }
-            }
-            
-            function getPackCategory(packName) {
-                const name = packName.toLowerCase();
-                
-                if (name.includes('base')) return 'Core';
-                if (name.includes('expansion')) return 'Expansion';
-                if (name.includes('nerd') || name.includes('geek') || name.includes('science') || name.includes('web')) return 'Tech';
-                if (name.includes('holiday') || name.includes('christmas')) return 'Seasonal';
-                if (name.includes('nostalgia') || name.includes('90s') || name.includes('2000s')) return 'Nostalgia';
-                return 'Themed';
-            }
-            
-            function isRecommendedPack(packName) {
-                const recommended = [
-                    'Geek Pack',
-                    'Science Pack',
-                    'World Wide Web Pack',
-                    'Nerd Bundle: A Few More Cards For You Nerds (Target Exclusive)'
-                ];
-                return recommended.includes(packName);
-            }
-            
-        function renderPacks() {
-            const container = document.getElementById('pack-container');
-            container.innerHTML = '';
-
-            if (availablePacks.length === 0) {
-                container.innerHTML = '<div class="loading-spinner">No packs available</div>';
-                return;
-            }
-
-            // Group packs by category
-            const groupedPacks = availablePacks.reduce((groups, pack) => {
-                const category = pack.category;
-                if (!groups[category]) groups[category] = [];
-                groups[category].push(pack);
-                return groups;
-            }, {});
-
-            // Render each category
-            Object.entries(groupedPacks).forEach(([category, packs]) => {
-                const categoryHeader = document.createElement('div');
-                categoryHeader.style.cssText = 'font-weight: bold; margin: 15px 0 8px 0; color: #333; font-size: 14px;';
-                categoryHeader.textContent = `${category} Packs`;
-                container.appendChild(categoryHeader);
-
-                packs.forEach(pack => {
-                    const packElement = document.createElement('div');
-                    packElement.className = 'pack-item';
-                    if (selectedPacks.has(pack.id)) {
-                        packElement.classList.add('selected');
-                    }
-                    
-                    packElement.onclick = () => togglePack(pack.id);
-                    
-                    packElement.innerHTML = `
-                        <input type="checkbox" class="pack-checkbox" id="pack-${pack.id}" 
-                               ${selectedPacks.has(pack.id) ? 'checked' : ''} 
-                               onchange="togglePack(${pack.id})">
-                        <div class="pack-info">
-                            <div class="pack-name">
-                                ${pack.name} 
-                                ${pack.isRecommended ? '⭐' : ''}
-                            </div>
-                            <div class="pack-description">${pack.description}</div>
-                            <div class="pack-stats">
-                                Category: ${pack.category} 
-                                ${pack.isRecommended ? '• Recommended for devs' : ''}
-                            </div>
-                        </div>
-                    `;
-
-                    container.appendChild(packElement);
-                });
+                updateSelectedCount();
             });
-
-            updateSelectedCount();
-        }
-
-        function togglePack(packId) {
-            if (selectedPacks.has(packId)) {
-                selectedPacks.delete(packId);
-            } else {
-                selectedPacks.add(packId);
-            }
-            renderPacks();
-        }
-
-        function selectAllPacks() {
-            selectedPacks = new Set(availablePacks.map(pack => pack.id));
-            renderPacks();
-        }
-
-        function clearAllPacks() {
-            selectedPacks.clear();
-            renderPacks();
-        }
-
-        function selectRecommendedPacks() {
-            selectedPacks.clear();
-            const recommendedPacks = availablePacks
-                .filter(pack => pack.isRecommended)
-                .map(pack => pack.id);
-            
-            selectedPacks = new Set(recommendedPacks);
-            renderPacks();
-        }
-
-        function updateSelectedCount() {
-            const count = selectedPacks.size;
-            document.getElementById('selected-count').textContent = 
-                `${count} pack${count !== 1 ? 's' : ''} selected`;
-        }
-
-        function getSelectedPackNames() {
-            return Array.from(selectedPacks).map(id => availablePacks.find(pack => pack.id === id)?.name).filter(Boolean);
-        }
-
-        // Form handlers
-        // Commented out to allow normal Django form submission
-        /*
-        document.getElementById('create-room-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            if (selectedPacks.size === 0) {
-                alert('Please select at least one card pack before creating a room.');
-                return;
-            }
-
-            // Generate random room code
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let roomCode = '';
-            for (let i = 0; i < 6; i++) {
-                roomCode += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            
-            // Get form data
-            const formData = {
-                roomCode: roomCode,
-                roomName: document.getElementById('room-name').value,
-                maxPlayers: parseInt(document.getElementById('max-players').value),
-                roundLimit: parseInt(document.getElementById('round-limit').value),
-                turnTimer: parseInt(document.getElementById('turn-timer').value),
-                selectedPacks: getSelectedPackNames()
-            };
-            
-            document.getElementById('room-code-text').textContent = roomCode;
-            document.getElementById('created-room-code').style.display = 'block';
-            
-            console.log('Creating room with:', formData);
-            
-            // Show success message
-            const successDiv = document.createElement('div');
-            successDiv.className = 'success-message';
-            successDiv.textContent = `Room created with ${selectedPacks.size} card packs!`;
-            document.getElementById('created-room-code').appendChild(successDiv);
-            
-            // In Django, this would POST to your create room endpoint
-            // window.location.href = `/room/${roomCode}/lobby/`;
         });
-        */
         
-        // Commented out to allow Django form submission
-        /*
-        document.getElementById('join-room-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const roomCode = document.getElementById('join-code').value.toUpperCase();
-            
-            if (roomCode.length === 6) {
-                console.log(`Joining room: ${roomCode}`);
-                // In Django, this would validate the code and redirect
-                // window.location.href = `/room/${roomCode}/lobby/`;
-                alert(`Joining room: ${roomCode}`);
-            } else {
-                alert('Please enter a valid 6-character room code');
+        // Pre-select recommended packs
+        selectRecommendedPacks();
+    });
+        
+        
+
+    function selectAllPacks() {
+        document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+            selectedPacks.add(parseInt(checkbox.value));
+        });
+        updateSelectedCount();
+    }
+
+    function clearAllPacks() {
+        selectedPacks.clear();
+        document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateSelectedCount();
+    }
+
+    function selectRecommendedPacks() {
+        clearAllPacks();
+        // Select packs with "Geek", "Science", "Web", or "Nerd" in the name
+        document.querySelectorAll('.pack-checkbox').forEach(checkbox => {
+            const label = checkbox.parentElement;
+            const packName = label.textContent.toLowerCase();
+            if (packName.includes('geek') || packName.includes('science') || 
+                packName.includes('web') || packName.includes('nerd')) {
+                checkbox.checked = true;
+                selectedPacks.add(parseInt(checkbox.value));
             }
         });
-        */
-        
-        function quickJoin(roomCode) {
-            document.getElementById('join-code').value = roomCode;
-            document.getElementById('join-room-form').dispatchEvent(new Event('submit'));
-        }
-    </script>
-</body>
-</html>
+        updateSelectedCount();
+    }
 
+    function updateSelectedCount() {
+        const count = selectedPacks.size;
+        document.getElementById('selected-count').textContent = 
+            `${count} pack${count !== 1 ? 's' : ''} selected`;
+    }
+    
+    function quickJoin(roomCode) {
+        document.getElementById('join-code').value = roomCode;
+        document.getElementById('join-room-form').dispatchEvent(new Event('submit'));
+    }
+</script>
 {% endblock %}

@@ -1,59 +1,46 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Edit Profile - Merge Conflict{% endblock %}
 
 {% block extra_css %}
-.avatar-preview {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.avatar-preview img {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    border: 3px solid #ddd;
-    object-fit: cover;
-}
-
-.default-avatar {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background-color: #ddd;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 60px;
-    color: #666;
-    border: 3px solid #ddd;
-    margin: 0 auto;
-}
-
-.form-actions {
-    text-align: center;
-    margin-top: 30px;
-}
-
-.form-actions .btn-secondary {
-    background-color: #666;
-    color: white;
-    border-color: #666;
-}
-
-.form-actions .btn-secondary:hover {
-    background-color: #555;
-}
+<link rel="stylesheet" href="{% static 'css/edit_profile.css' %}">
 {% endblock %}
 
 {% block content %}
 <div class="form-container" style="max-width: 600px;">
+    {% if user.stats and user.stats.games_played > 0 %}
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="stat-value">{{ user.stats.games_played }}</div>
+            <div class="stat-label">Games Played</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ user.stats.games_won }}</div>
+            <div class="stat-label">Games Won</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ user.stats.win_percentage }}%</div>
+            <div class="stat-label">Win Rate</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ user.stats.total_score }}</div>
+            <div class="stat-label">Total Score</div>
+        </div>
+    </div>
+    {% endif %}
+    
     <h1>Edit Profile</h1>
     
     {% if messages %}
-        {% for message in messages %}
-            <div class="success-message">{{ message }}</div>
-        {% endfor %}
+        <div id="message-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                    <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 
     <form method="POST" enctype="multipart/form-data">

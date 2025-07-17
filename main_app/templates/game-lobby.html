@@ -4,253 +4,7 @@
 {% block title %}{{ room.name }} - Game Lobby{% endblock %}
 
 {% block extra_css %}
-<style>
-        /* Kay-who-codes base CSS */
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        body {
-          font-family: 'Arial', sans-serif;
-          display: flex;
-          flex-direction: column;
-          min-height: 100vh;
-          background-color: #f4f4f4;
-          color: black;
-        }
-
-        h1 {
-          font-size: 36px;
-          font-weight: bold;
-          margin: 20px 0;
-          text-align: center;
-        }
-
-        h2 {
-          font-size: 24px;
-          margin: 15px 0;
-          color: #333;
-        }
-
-        .header-bar {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 15px 20px;
-          background-color: #3b3b3b;
-          color: white;
-        }
-        
-        .header-link {
-          color: white;
-          font-size: 18px;
-          text-decoration: none;
-          font-weight: bold;
-          margin-left: 20px;
-        }
-
-        .header-link:hover {
-          color: #ccc;
-        }
-
-        .logo {
-          font-size: 24px;
-          font-weight: bold;
-        }
-
-        .lobby-container {
-          max-width: 1000px;
-          margin: 20px auto;
-          padding: 0 20px;
-        }
-
-        .room-info {
-          background-color: white;
-          border: 3px solid black;
-          border-radius: 12px;
-          padding: 25px;
-          margin-bottom: 30px;
-          text-align: center;
-        }
-
-        .room-code-display {
-          background-color: #e8e8e8;
-          border: 2px dashed #666;
-          border-radius: 8px;
-          padding: 15px;
-          margin: 15px 0;
-          font-family: 'Courier New', monospace;
-          font-size: 32px;
-          font-weight: bold;
-          letter-spacing: 3px;
-        }
-
-        .share-info {
-          color: #666;
-          font-size: 16px;
-          margin-top: 10px;
-        }
-
-        .lobby-content {
-          display: grid;
-          grid-template-columns: 2fr 1fr;
-          gap: 30px;
-          margin-bottom: 30px;
-        }
-
-        .players-section {
-          background-color: white;
-          border: 3px solid black;
-          border-radius: 12px;
-          padding: 25px;
-        }
-
-        .settings-section {
-          background-color: white;
-          border: 3px solid black;
-          border-radius: 12px;
-          padding: 25px;
-        }
-
-        .player-list {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 15px;
-          margin-top: 20px;
-        }
-
-        .player-card {
-          background-color: #f9f9f9;
-          border: 2px solid #ddd;
-          border-radius: 8px;
-          padding: 15px;
-          text-align: center;
-          position: relative;
-        }
-
-        .player-card.host {
-          border-color: #007acc;
-          background-color: #e6f3ff;
-        }
-
-        .player-card.host::before {
-          content: "👑";
-          position: absolute;
-          top: 5px;
-          right: 10px;
-          font-size: 18px;
-        }
-
-        .player-name {
-          font-weight: bold;
-          font-size: 16px;
-          margin-bottom: 5px;
-        }
-
-        .player-status {
-          font-size: 12px;
-          color: #666;
-        }
-
-        .kick-button {
-          background-color: #ff4444;
-          color: white;
-          border: none;
-          padding: 5px 10px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-          margin-top: 8px;
-        }
-
-        .kick-button:hover {
-          background-color: #cc3333;
-        }
-
-        .settings-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px 0;
-          border-bottom: 1px solid #eee;
-        }
-
-        .settings-item:last-child {
-          border-bottom: none;
-        }
-
-        .settings-value {
-          font-weight: bold;
-          color: #007acc;
-        }
-
-        .game-controls {
-          text-align: center;
-          margin-top: 30px;
-        }
-
-        .action-button {
-          padding: 15px 30px;
-          font-size: 18px;
-          font-weight: bold;
-          margin: 10px;
-          cursor: pointer;
-          border: 2px solid black;
-          border-radius: 10px;
-          transition: transform 0.3s ease, background-color 0.3s ease;
-        }
-
-        .start-button {
-          background-color: #28a745;
-          color: white;
-          border-color: #28a745;
-        }
-
-        .start-button:disabled {
-          background-color: #6c757d;
-          border-color: #6c757d;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .leave-button {
-          background-color: #dc3545;
-          color: white;
-          border-color: #dc3545;
-        }
-
-        .action-button:hover:not(:disabled) {
-          transform: scale(1.05);
-        }
-
-        .status-message {
-          background-color: #fff3cd;
-          border: 1px solid #ffeaa7;
-          border-radius: 8px;
-          padding: 15px;
-          margin: 20px 0;
-          text-align: center;
-          color: #856404;
-        }
-
-        @media (max-width: 768px) {
-          .lobby-content {
-            grid-template-columns: 1fr;
-          }
-          
-          .player-list {
-            grid-template-columns: 1fr;
-          }
-          
-          .room-code-display {
-            font-size: 24px;
-            letter-spacing: 2px;
-          }
-        }
-</style>
+<link rel="stylesheet" href="{% static 'css/game-lobby.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -316,6 +70,23 @@
                     <span>Room Status:</span>
                     <span class="settings-value">Open</span>
                 </div>
+                <div class="settings-item">
+                    <span>Card Packs:</span>
+                    <span class="settings-value">
+                        {% if room.selected_packs.exists %}
+                            {{ room.selected_packs.count }} packs selected
+                        {% else %}
+                            Default packs
+                        {% endif %}
+                    </span>
+                </div>
+                {% if room.selected_packs.exists %}
+                <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                    {% for pack in room.selected_packs.all %}
+                        <div>• {{ pack.name }} ({{ pack.black_card_count }}B/{{ pack.white_card_count }}W)</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -339,29 +110,105 @@
 
 {% block extra_js %}
 <script>
-    // Check for game status and player updates every 3 seconds
-    setInterval(function() {
-        // Check if a game exists for this room
-        fetch("{% url 'game_status' room.room_code %}")
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
+let lastPlayerCount = {{ player_count }};
+
+function updateLobby() {
+    console.log('Checking lobby status...');
+    fetch("{% url 'lobby_status' room.room_code %}")
+        .then(response => response.json())
+        .then(data => {
+            console.log('Lobby data:', data);
+            // Handle errors or redirects
+            if (data.error || data.redirect) {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
                 }
-                throw new Error('Game status check failed');
-            })
-            .then(data => {
-                // If game is active, redirect to game page
-                if (data.game_status === 'active') {
-                    window.location.href = "{% url 'game_play' room.room_code %}";
-                } else {
-                    // Otherwise just refresh to show new players
-                    location.reload();
+                return;
+            }
+            
+            // Always update player count
+            lastPlayerCount = data.player_count;
+            
+            // Update player count in header
+            const playerHeader = document.querySelector('.players-section h2');
+            if (playerHeader) {
+                playerHeader.textContent = `Players (${data.player_count}/{{ room.max_players }})`;
+            }
+            
+            // Always update player list (players might change even if count doesn't)
+            const playerList = document.querySelector('.player-list');
+            playerList.innerHTML = '';
+            
+            data.players.forEach(player => {
+                    const playerCard = document.createElement('div');
+                    playerCard.className = 'player-card';
+                    if (player.is_creator) {
+                        playerCard.classList.add('host');
+                    }
+                    
+                    const playerName = document.createElement('div');
+                    playerName.className = 'player-name';
+                    playerName.textContent = player.username;
+                    
+                    const playerStatus = document.createElement('div');
+                    playerStatus.className = 'player-status';
+                    playerStatus.textContent = player.is_creator ? 'Room Creator • Ready' : 'Ready';
+                    
+                    playerCard.appendChild(playerName);
+                    playerCard.appendChild(playerStatus);
+                    
+                    // Add kick button if current user is creator and this isn't their own card
+                    {% if is_creator %}
+                    if (player.id !== {{ request.user.id }}) {
+                        const form = document.createElement('form');
+                        form.method = 'post';
+                        form.action = `/room/{{ room.room_code }}/kick/${player.id}/`;
+                        form.style.display = 'inline';
+                        
+                        const csrfToken = document.createElement('input');
+                        csrfToken.type = 'hidden';
+                        csrfToken.name = 'csrfmiddlewaretoken';
+                        csrfToken.value = '{{ csrf_token }}';
+                        
+                        const kickButton = document.createElement('button');
+                        kickButton.type = 'submit';
+                        kickButton.className = 'kick-button';
+                        kickButton.textContent = 'Kick';
+                        
+                        form.appendChild(csrfToken);
+                        form.appendChild(kickButton);
+                        playerCard.appendChild(form);
+                    }
+                    {% endif %}
+                    
+                    playerList.appendChild(playerCard);
+                });
+                
+                // Update start button state if user is creator
+                {% if is_creator %}
+                const startBtn = document.getElementById('start-btn');
+                if (startBtn) {
+                    if (data.players.length >= 2) {
+                        startBtn.disabled = false;
+                        startBtn.style.backgroundColor = '#28a745';
+                        startBtn.style.borderColor = '#28a745';
+                    } else {
+                        startBtn.disabled = true;
+                        startBtn.style.backgroundColor = '#6c757d';
+                        startBtn.style.borderColor = '#6c757d';
+                    }
                 }
-            })
-            .catch(error => {
-                // If no game exists yet or error, just refresh the page
-                location.reload();
-            });
-    }, 3000); // Check every 3 seconds
+                {% endif %}
+        })
+        .catch(error => {
+            console.error('Lobby update failed:', error);
+        });
+}
+
+// Initial check
+updateLobby();
+
+// Poll every 3 seconds
+setInterval(updateLobby, 3000);
 </script>
 {% endblock %}

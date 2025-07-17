@@ -2,6 +2,8 @@ import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import DetailView, ListView
+from django.db.models import Q, Count
+from django.core.paginator import Paginator
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
@@ -11,7 +13,7 @@ from .forms import SignUpForm, ProfileEditForm
 from .services import GameService
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership
+from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership, CardPack
 from django.db.models import Max
 from django.core.cache import cache
 
@@ -35,6 +37,7 @@ def dashboard(request):
         max_players = int(request.POST.get('max-players', 8))
         round_limit = int(request.POST.get('round-limit', 10))
         turn_timer = int(request.POST.get('turn-timer', 3)) * 60  # Convert minutes to seconds
+        selected_pack_ids = request.POST.getlist('selected_packs')
         
         room = Room.objects.create(
             name=room_name,
@@ -43,6 +46,11 @@ def dashboard(request):
             round_limit=round_limit,
             turn_time_limit=turn_timer
         )
+        
+        # Add selected packs to the room
+        if selected_pack_ids:
+            room.selected_packs.set(selected_pack_ids)
+        
         # Add creator as member
         RoomMembership.objects.create(
             user=request.user,
@@ -50,10 +58,99 @@ def dashboard(request):
         )
         return redirect('room', room_code=room.room_code)
     
+    # Get available card packs from database, organized by source
+    # Use a single query with proper ordering
+    from django.db.models import Q, Case, When, Value, IntegerField
+    
+    # Define default pack names (these specific 4 packs)
+    default_pack_names = [
+        'Geek Pack',
+        'Nerd Bundle: A Few More Cards For You Nerds (Target Exclusive)', 
+        'Science Pack',
+        'World Wide Web Pack'
+    ]
+    
+    # Fetch all packs in one optimized query
+    all_packs = CardPack.objects.filter(is_active=True)
+    
+    # Separate packs by category
+    default_packs = list(all_packs.filter(name__in=default_pack_names).order_by('name'))
+    github_packs = list(all_packs.filter(name__startswith='[GitHub]').order_by('name'))
+    
+    # Default packs already have clean names, no need for display_name
+    
+    # REST Against Humanity packs (exclude default packs and GitHub packs)
+    api_packs = list(all_packs.exclude(
+        Q(name__in=default_pack_names) | Q(name__startswith='[GitHub]')
+    ).order_by('name'))
+    
+    # Add display_name for GitHub packs
+    for pack in github_packs:
+        pack.display_name = pack.name.replace('[GitHub] ', '')
+    
+    # Add display_name for API packs (remove "CAH" prefix)
+    for pack in api_packs:
+        pack.display_name = pack.name.replace('CAH: ', '').replace('CAH ', '')
+    
     context = {
         'user_rooms': user_rooms,
+        'default_packs': default_packs,
+        'api_packs': api_packs,
+        'github_packs': github_packs,
     }
     return render(request, 'dashboard.html', context)
+
+@login_required
+def room_list(request):
+    """Display all rooms with search and filter"""
+    # Get query parameters
+    search_query = request.GET.get('search', '')
+    filter_type = request.GET.get('filter', 'all')  # all, mine, active
+    
+    # Base queryset
+    rooms = Room.objects.filter(is_active=True).annotate(
+        player_count=Count('memberships', filter=Q(memberships__is_active=True))
+    ).select_related('creator')
+    
+    # Apply filters
+    if search_query:
+        rooms = rooms.filter(
+            Q(name__icontains=search_query) | 
+            Q(room_code__icontains=search_query) |
+            Q(creator__username__icontains=search_query)
+        )
+    
+    if filter_type == 'mine':
+        rooms = rooms.filter(
+            memberships__user=request.user,
+            memberships__is_active=True
+        )
+    elif filter_type == 'active':
+        rooms = rooms.filter(game__status='active')
+    
+    # Order by most recent
+    rooms = rooms.order_by('-created_at')
+    
+    # Paginate
+    paginator = Paginator(rooms, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get user's recent rooms
+    recent_rooms = Room.objects.filter(
+        memberships__user=request.user,
+        memberships__is_active=True,
+        is_active=True
+    ).order_by('-memberships__joined_at')[:5]
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'filter_type': filter_type,
+        'recent_rooms': recent_rooms,
+    }
+    
+    return render(request, 'room_list.html', context)
 
 @login_required
 def join_room(request):
@@ -192,6 +289,16 @@ def edit_profile(request):
             return redirect('edit_profile')
     else:
         form = ProfileEditForm(instance=request.user)
+    
+    # Ensure user has stats
+    from .models import UserStats
+    UserStats.objects.get_or_create(user=request.user)
+    
+    # Clear any stale messages (temporary fix - remove after deployment)
+    storage = messages.get_messages(request)
+    for _ in storage:
+        pass  # This consumes and clears all messages
+    
     return render(request, 'edit_profile.html', {'form': form})
 
 @login_required
@@ -243,7 +350,7 @@ def game_play(request, room_code):
         player = game.players.get(user=request.user)
     except GamePlayer.DoesNotExist:
         messages.error(request, "You are not in this game")
-        return redirect('room_list')
+        return redirect('dashboard')
 
     # Get current round
     current_round = game.rounds.order_by('-round_number').first()
@@ -303,6 +410,9 @@ def submit_card(request, room_code):
     try:
         GameService.submit_card(player, current_round, card_id)
         messages.success(request, "Card submitted!")
+        
+        # Invalidate cache to ensure fresh data
+        invalidate_game_status_cache(room_code)
 
         # Check if all players submitted
         expected_submissions = game.players.filter(is_active=True).exclude(
@@ -419,6 +529,42 @@ def kick_player(request, room_code, user_id):
     
     return redirect('room', room_code=room_code)
 
+@login_required
+def lobby_status(request, room_code):
+    """Get lobby status for AJAX polling"""
+    room = get_object_or_404(Room, room_code=room_code, is_active=True)
+    
+    # Check if user is still a member
+    if not room.memberships.filter(user=request.user, is_active=True).exists():
+        return JsonResponse({'error': 'Not a member', 'redirect': 'dashboard'})
+    
+    # Check if game started
+    try:
+        game = room.game
+        if game.status == 'active':
+            return JsonResponse({
+                'game_status': 'active',
+                'redirect': f'/room/{room_code}/game/'
+            })
+    except Game.DoesNotExist:
+        pass
+    
+    # Get current players
+    players = []
+    for membership in room.memberships.filter(is_active=True).select_related('user'):
+        players.append({
+            'id': membership.user.id,
+            'username': membership.user.username,
+            'is_creator': membership.user == room.creator,
+            'avatar_url': membership.user.avatar_url.url if membership.user.avatar_url else None
+        })
+    
+    return JsonResponse({
+        'player_count': len(players),
+        'players': players,
+        'game_status': 'waiting'
+    })
+
 def game_status(request, room_code):
     """Get current game status for polling"""
     # Create cache key
@@ -455,8 +601,8 @@ def game_status(request, room_code):
             'total_players': 0,
         }
     
-    # Cache the result for 2 seconds (shorter than the 3-second poll interval)
-    cache.set(cache_key, data, timeout=2)
+    # Cache the result for 5 seconds to reduce database hits
+    cache.set(cache_key, data, timeout=5)
     
     return JsonResponse(data)
 
