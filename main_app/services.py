@@ -1,12 +1,43 @@
 from django.db import transaction
 from django.utils import timezone
-from .models import Game, GamePlayer, Round, CardSubmission, UserStats
+from .models import Game, GamePlayer, Round, CardSubmission, UserStats, Card, CardPack
 from .utils.api_client import cards_api
 import random
 import json
 
 class GameService:
   """Service class for managing game logic"""
+  
+  @staticmethod
+  def use_database_cards():
+    """Check if we should use database cards or fall back to API"""
+    # Use database if we have any cards
+    return Card.objects.exists()
+  
+  @staticmethod
+  def get_room_cards(room, card_type=None):
+    """Get cards available for a room based on selected packs"""
+    if not GameService.use_database_cards():
+      # Fall back to API
+      return None
+    
+    # Get cards from selected packs (or default packs if none selected)
+    selected_packs = room.selected_packs.all()
+    if not selected_packs:
+      # Use default packs
+      default_pack_names = ["CAH Base Set", "CAH: First Expansion", "CAH: Second Expansion", "CAH: Third Expansion"]
+      selected_packs = CardPack.objects.filter(name__in=default_pack_names)
+    
+    # Get cards
+    cards = Card.objects.filter(
+      pack__in=selected_packs,
+      is_active=True
+    )
+    
+    if card_type:
+      cards = cards.filter(card_type=card_type)
+    
+    return cards
 
   @staticmethod
   @transaction.atomic
@@ -59,29 +90,48 @@ class GameService:
       
       # Keep fetching cards until we have enough unique ones
       unique_cards = []
-      attempts = 0
-      max_attempts = 5  # Prevent infinite loop
       
-      while len(unique_cards) < needed_cards and attempts < max_attempts:
-        # Fetch more cards than needed to account for duplicates
-        fetch_count = (needed_cards - len(unique_cards)) * 2
-        white_cards = cards_api.get_white_cards(count=fetch_count)
+      # Check if we should use database cards
+      room = game.room
+      room_cards = GameService.get_room_cards(room, card_type='white')
+      
+      if room_cards:
+        # Use database cards
+        # Get all available white cards that haven't been used
+        available_cards = room_cards.exclude(text__in=all_used_cards).order_by('?')
         
-        # Filter out duplicates
-        for card in white_cards:
-          if card['text'] not in all_used_cards and len(unique_cards) < needed_cards:
-            unique_cards.append(card)
-            all_used_cards.add(card['text'])
+        # Take the needed number of cards
+        for card in available_cards[:needed_cards]:
+          unique_cards.append({
+            'id': str(random.randint(10000, 99999)),  # Generate unique ID
+            'text': card.text,
+            'pack': card.pack.name
+          })
+          all_used_cards.add(card.text)
+      else:
+        # Fall back to API
+        attempts = 0
+        max_attempts = 5  # Prevent infinite loop
         
-        attempts += 1
+        while len(unique_cards) < needed_cards and attempts < max_attempts:
+          # Fetch more cards than needed to account for duplicates
+          fetch_count = (needed_cards - len(unique_cards)) * 2
+          white_cards = cards_api.get_white_cards(count=fetch_count)
+          
+          # Filter out duplicates
+          for card in white_cards:
+            if card['text'] not in all_used_cards and len(unique_cards) < needed_cards:
+              unique_cards.append({
+                'id': str(random.randint(10000, 99999)),  # Generate unique ID
+                'text': card['text'],
+                'pack': card.get('pack', 'Unknown')
+              })
+              all_used_cards.add(card['text'])
+          
+          attempts += 1
       
       # Add to player's hand
-      for card in unique_cards:
-        current_hand.append({
-          'id': str(random.randint(10000, 99999)),  # Generate unique ID
-          'text': card['text'],
-          'pack': card.get('pack', 'Unknown')
-        })
+      current_hand.extend(unique_cards)
 
       # Update player's hand
       player.card_hand = current_hand
@@ -95,13 +145,29 @@ class GameService:
   @transaction.atomic
   def create_round(game):
     """Create a new round with a black card"""
-    # Get random black card from API
-    # Fetch multiple cards at once to improve caching
-    black_cards = cards_api.get_black_cards(count=5)  # Get more for cache
-    if not black_cards:
-      raise Exception("No black cards available")
-
-    black_card = black_cards[0]  # Use the first one
+    # Get random black card
+    room = game.room
+    room_cards = GameService.get_room_cards(room, card_type='black')
+    
+    if room_cards:
+      # Use database cards - filter for single-pick cards only
+      available_black_cards = room_cards.filter(pick=1).order_by('?')
+      if not available_black_cards.exists():
+        raise Exception("No single-pick black cards available")
+      
+      # Get a random black card
+      db_card = available_black_cards.first()
+      black_card = {
+        'text': db_card.text,
+        'pick': db_card.pick,
+        'pack': db_card.pack.name
+      }
+    else:
+      # Fall back to API
+      black_cards = cards_api.get_black_cards(count=5)  # Get more for cache
+      if not black_cards:
+        raise Exception("No black cards available")
+      black_card = black_cards[0]  # Use the first one
 
     # Determine next judge (rotate through players)
     last_round = game.rounds.order_by('-round_number').first()
