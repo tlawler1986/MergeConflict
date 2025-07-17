@@ -1,6 +1,6 @@
 # Merge Conflict - A CAH Joint
 
-![Merge Conflict Logo](main_app/static/images/logo.png)
+<img src="main_app/static/images/mclogo_black_white_bg.png" alt="Merge Conflict Logo" width="200">
 
 A Django-based multiplayer card game that brings the humor of Cards Against Humanity to the world of software development. Battle your fellow developers with programming jokes, git references, and all the tech humor that makes our daily lives both hilarious and painful.
 
@@ -9,11 +9,19 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 **Home Page**
 
-![Home Page](docs/images/home page.png)
+![Home Page](docs/images/home_page.png)
 
 **Home Page Rules**
 
-![Home Page Rules](docs/images/home page rules.png)
+![Home Page Rules](docs/images/home_page_rules.png)
+
+**Sign Up**
+
+![Sign Up](docs/images/sign_up.png)
+
+**Account Verification**
+
+![Account Verification](docs/images/account_verification.png)
 
 **Dashboard**
 
@@ -25,17 +33,33 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 **Room List**
 
-![Room List](docs/images/room list.png)
+![Room List](docs/images/room_list.png)
+
+**Game Player View**
+
+![Room List](docs/images/game_player.png)
+
+**Game Judge (Czar) View**
+
+![Room List](docs/images/game_judge.png)
 
 **Player Profile with Stats**
 
 ![Player Profile with Stats](docs/images/my_profile.png)
 
+**Change Password**
 
+![Change Password](docs/images/change_password.png)
+
+**Sign Out**
+
+![Sign Out](docs/images/sign_out.png)
+
+**Delete Account**
+
+![Delete Account](docs/images/delete_account.png)
 
 ---
-
-
 
 ## Links
 
