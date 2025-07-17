@@ -73,7 +73,7 @@
     <div class="submissions-area">
         <div class="submissions-title">
             {% if current_round.status == 'card_selection' %}
-                Submitted Cards ({{ submissions|length }}/{{ players|length|add:"-1" }} players)
+                Submitted Cards (<span class="submission-count">{{ submissions|length }}</span>/<span class="submission-total">{{ players|length|add:"-1" }}</span> players)
             {% else %}
                 Submitted Cards
             {% endif %}
@@ -137,11 +137,24 @@ let totalPlayers = {{ players|length }};
 
 // Function to update submission display
   function updateSubmissionDisplay(submissionCount, totalPlayers) {
-      // Update the submission count text
-      const submissionTitle = document.querySelector('.submissions-title');
-      if (submissionTitle && currentRoundStatus === 'card_selection') {
-          const expectedSubmissions = totalPlayers - 1; // Minus the judge
-          submissionTitle.innerHTML = `Submitted Cards (${submissionCount}/${expectedSubmissions} players)`;
+      // Update the submission count text smoothly
+      if (currentRoundStatus === 'card_selection') {
+          const countSpan = document.querySelector('.submission-count');
+          const totalSpan = document.querySelector('.submission-total');
+          if (countSpan) {
+              // Add transition effect to the count
+              countSpan.style.transition = 'all 0.3s ease';
+              countSpan.textContent = submissionCount;
+              
+              // Add a brief highlight effect
+              countSpan.style.color = '#28a745';
+              setTimeout(() => {
+                  countSpan.style.color = '';
+              }, 300);
+          }
+          if (totalSpan) {
+              totalSpan.textContent = totalPlayers - 1; // Minus the judge
+          }
       }
 
       // Update card backs display with animation
