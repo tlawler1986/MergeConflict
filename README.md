@@ -5,23 +5,27 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 ---
 ## 📸 Screenshots
 
-Home Page
+**Home Page**
 
 ![Home Page](/Users/swh2/code/ga/projects/MergeConflict/docs/images/home page.png)
 
-Dashboard
+**Home Page Rules**
+
+![Home Page Rules](/Users/swh2/code/ga/projects/MergeConflict/docs/images/home page rules.png)
+
+**Dashboard**
 
 ![Dashboard](/Users/swh2/code/ga/projects/MergeConflict/docs/images/dashboard.png)
 
-Lobby
+**Lobby**
 
 ![Lobby](/Users/swh2/code/ga/projects/MergeConflict/docs/images/lobby.png)
 
-Room List
+**Room List**
 
 ![Room List](/Users/swh2/code/ga/projects/MergeConflict/docs/images/room list.png)
 
-Player Profile with Stats
+**Player Profile with Stats**
 
 ![Player Profile with Stats](/Users/swh2/code/ga/projects/MergeConflict/docs/images/my_profile.png)
 

@@ -1,0 +1,91 @@
+.danger-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: white;
+    border: 3px solid #dc3545;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.danger-header {
+    text-align: center;
+    color: #dc3545;
+    margin-bottom: 30px;
+}
+
+.warning-box {
+    background-color: #fff3cd;
+    border: 2px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.warning-box h2 {
+    color: #856404;
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+.account-info {
+    text-align: center;
+    font-size: 18px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+}
+
+.consequences-list {
+    text-align: left;
+    margin: 20px auto;
+    max-width: 400px;
+}
+
+.consequences-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.consequences-list li {
+    padding: 8px 0;
+    padding-left: 25px;
+    position: relative;
+}
+
+.consequences-list li:before {
+    content: "×";
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 20px;
+    position: absolute;
+    left: 0;
+}
+
+.final-warning {
+    text-align: center;
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+}
+
+.password-section {
+    margin: 30px 0;
+    text-align: center;
+}
+
+.action-buttons {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.action-buttons .btn-danger {
+    margin-right: 15px;
+}
