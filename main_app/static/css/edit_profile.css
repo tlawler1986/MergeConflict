@@ -42,8 +42,26 @@
 
 .alert {
     margin-bottom: 15px;
-    padding: 12px 20px;
+    padding: 12px 40px 12px 20px;
     border-radius: 4px;
+    position: relative;
+}
+
+.btn-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.5;
+    line-height: 1;
+    padding: 0;
+}
+
+.btn-close:hover {
+    opacity: 1;
 }
 .alert-success {
     background-color: #d4edda;

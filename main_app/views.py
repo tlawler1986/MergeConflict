@@ -410,6 +410,9 @@ def submit_card(request, room_code):
     try:
         GameService.submit_card(player, current_round, card_id)
         messages.success(request, "Card submitted!")
+        
+        # Invalidate cache to ensure fresh data
+        invalidate_game_status_cache(room_code)
 
         # Check if all players submitted
         expected_submissions = game.players.filter(is_active=True).exclude(
@@ -598,8 +601,8 @@ def game_status(request, room_code):
             'total_players': 0,
         }
     
-    # Cache the result for 30 seconds to reduce database hits
-    cache.set(cache_key, data, timeout=30)
+    # Cache the result for 5 seconds to reduce database hits
+    cache.set(cache_key, data, timeout=5)
     
     return JsonResponse(data)
 
