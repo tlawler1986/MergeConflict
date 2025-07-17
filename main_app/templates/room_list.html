@@ -4,7 +4,10 @@
 {% block title %}Browse Rooms - Merge Conflict{% endblock %}
 
 {% block extra_css %}
+
 <link rel="stylesheet" href="{% static 'css/room_list.css' %}">
+
+
 {% endblock %}
 
 {% block content %}
@@ -76,12 +79,14 @@
         </div>
         {% empty %}
         <div class="card-style" style="text-align: center; padding: 60px 30px; grid-column: 1 / -1;">
+
             <h2>No Rooms Found</h2>
             <p>Be the first to create a room and start playing!</p>
             <a href="{% url 'dashboard' %}" class="btn-create">Create Room</a>
         </div>
         {% endfor %}
     </div>
+    {% endif %}
     
     <!-- Pagination -->
     {% if page_obj.has_other_pages %}
