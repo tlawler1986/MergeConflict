@@ -1,8 +1,36 @@
-Merge Conflict - A CAH Joint
+# Merge Conflict - A CAH Joint
 
 A Django-based multiplayer card game that brings the humor of Cards Against Humanity to the world of software development. Battle your fellow developers with programming jokes, git references, and all the tech humor that makes our daily lives both hilarious and painful.
 
 ---
+## 📸 Screenshots
+
+Home Page
+
+![Home Page](/Users/swh2/code/ga/projects/MergeConflict/docs/images/home page.png)
+
+Dashboard
+
+![Dashboard](/Users/swh2/code/ga/projects/MergeConflict/docs/images/dashboard.png)
+
+Lobby
+
+![Lobby](/Users/swh2/code/ga/projects/MergeConflict/docs/images/lobby.png)
+
+Room List
+
+![Room List](/Users/swh2/code/ga/projects/MergeConflict/docs/images/room list.png)
+
+Player Profile with Stats
+
+![Player Profile with Stats](/Users/swh2/code/ga/projects/MergeConflict/docs/images/my_profile.png)
+
+
+
+---
+
+
+
 ## Links
 
 [GitHub Repo](https://github.com/JohnnieBarron/MergeConflict)
@@ -24,8 +52,28 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 
 ---
 
- **Tech Stack:** Django, Python, PostgreSQL, Javascript, HTML/CSS
- **Deployment:** Heroku
+## 🚀 Installation & Setup
+
+### Prerequisites
+
+- Django 5.2.3+
+- Python 3.9+
+- PostgreSQL
+- Git
+
+ ### Services
+
+- **REST Against Humanity API**: Card content and game data
+- **Against-Humanity GitHub Repo**: More card content and game data
+- **Neon PostgreSQL**: Database hosting
+- **Heroku**: Application deployment
+
+## 🧑🏻‍🔧  Production Deployment
+
+- **Platform**: Heroku
+- **Database**: Neon PostgreSQL
+- **Static Files**: Heroku static file serving
+- **Environment**: Production settings with DEBUG=False
 
 ---
 
@@ -53,6 +101,8 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 - Custom card deck creation
 - Spectator mode
 - Advanced game rules and variations
+
+---
 
 ## 🛠 Technical Architecture
 
@@ -85,19 +135,7 @@ A Django-based multiplayer card game that brings the humor of Cards Against Huma
 - **1:M**: User → Room (creator), Game → Round, Round → CardSubmission
 - **M:M**: User ↔ Room (through RoomMembership)
 
-### Services
-
-- **REST Against Humanity API**: Card content and game data
-- **Neon PostgreSQL**: Database hosting
-- **Heroku**: Application deployment
-
-## 🚀 Installation & Setup
-
-### Prerequisites
-
-- Python 3.9+
-- PostgreSQL
-- Git
+---
 
 ### Local Development Setup
 
@@ -139,6 +177,8 @@ DB_HOST=your-database-host
 EMAIL_HOST_USER=your-email@example.com
 EMAIL_HOST_PASSWORD=your-email-password
 ```
+
+---
 
 ## 🎯 MVP User Stories
 
@@ -183,11 +223,13 @@ EMAIL_HOST_PASSWORD=your-email-password
 26. **As a player**, I want to change my password, because I need to maintain account security.
 27. **As a player**, I want to view my complete profile, because I want to see all my account information.
 
+---
+
 ## 🎨 Design & UI
 
 ### Styling Framework
 
-- **Base**: Custom CSS adapted from [kay-who-codes Cards Against Humanity](https://github.com/kay-who-codes/Cards-Against-Humanity)
+- **Base**: Custom CSS adapted from and inspired by [kay-who-codes Cards Against Humanity](https://github.com/kay-who-codes/Cards-Against-Humanity)
 - **Cards**: Authentic black/white card styling
 - **Layout**: Responsive grid system
 - **Features**: Dark mode support, smooth animations
@@ -199,22 +241,9 @@ EMAIL_HOST_PASSWORD=your-email-password
 3. **Game Lobby**: Player waiting area with settings
 4. **Active Game**: Real-time gameplay interface
 
+---
 
-
-## 🚀 Deployment
-
-### Production Environment
-
-- **Platform**: Heroku
-- **Database**: Neon PostgreSQL
-- **Static Files**: Heroku static file serving
-- **Environment**: Production settings with DEBUG=False
-
-
-
-## 📱 API Documentation
-
-### REST Against Humanity API
+### [REST Against Humanity API](https://www.restagainsthumanity.com/gql/)
 
 ```python
 # REST API Base URL
@@ -228,13 +257,15 @@ GET /packs - List available card packs
 GET /cards?packs=pack1,pack2 - Get cards from specific packs
 ```
 
-### Against Humanity (GitHub)
+### [Against Humanity](https://github.com/nodanaonlyzuul/against-humanity)
 
 ```python
 # Repository with JSON card data
 # https://github.com/nodanaonlyzuul/against-humanity
 # Contains cards.json with original CAH cards organized by expansion
 ```
+
+---
 
 ## 🔒 Security Considerations
 
@@ -243,6 +274,8 @@ GET /cards?packs=pack1,pack2 - Get cards from specific packs
 - **Database**: Parameterized queries prevent SQL injection
 - **API Keys**: Environment variables for sensitive data
 - **Production**: HTTPS, secure headers, debug disabled
+
+---
 
 ## 📈 Performance Optimizations
 
@@ -253,6 +286,8 @@ GET /cards?packs=pack1,pack2 - Get cards from specific packs
 - **Database Indexing**: Optimized queries for game operations
 - **Static Files**: Efficient CSS/JS delivery
 - **Session Management**: Lightweight game state storage
+
+---
 
 ## 🤝 Contributing
 
@@ -271,15 +306,15 @@ GET /cards?packs=pack1,pack2 - Get cards from specific packs
 - **Templates**: Semantic HTML with accessible design
 - **CSS**: Organized, commented stylesheets
 
+---
+
 ## 📄 License
 
 This project is created for educational purposes as part of the General Assembly Software Engineering Bootcamp.
 
-## 📸 Screenshots
+---
 
-*Screenshots coming soon - showcasing game lobby, active gameplay, and room management features.*
-
-## 🙏 Acknowledgments
+## 🙏🏼 Acknowledgments
 
 - **Cards Against Humanity**: Original game concept and inspiration (https://www.cardsagainsthumanity.com/)
 - **REST Against Humanity**: API providing card content (https://www.restagainsthumanity.com/2.x/ & https://github.com/celsiusnarhwal/rest-against-humanity)
