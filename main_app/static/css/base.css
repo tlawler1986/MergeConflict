@@ -19,7 +19,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: 10px 20px;
     background-color: #3b3b3b;
     color: white;
 }
@@ -65,6 +65,23 @@ body {
 .logo {
     font-size: 24px;
     font-weight: bold;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 80px;
+    width: auto;
+    filter: brightness(0) invert(1); /* Makes the logo white if it's dark */
+}
+
+.logo-img:hover {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
 }
 
 .main-content {

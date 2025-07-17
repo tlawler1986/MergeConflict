@@ -5,13 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Merge Conflict{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Header -->
     <div class="header-bar">
-        <a href="/" class="logo" style="text-decoration: none; color: white;">Merge Conflict</a>
+        <a href="/" class="logo-link">
+            <img src="{% static 'images/mclogo.png' %}" alt="Merge Conflict" class="logo-img">
+        </a>
         <div>
             {% if user.is_authenticated %}
                 <span style="margin-right: 10px;">Welcome, {{ user.username }}!</span>

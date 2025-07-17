@@ -6,6 +6,12 @@
     gap: 20px;
 }
 
+.home-logo {
+    width: 200px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
 .tagline {
     font-size: 20px;
     color: #666;
