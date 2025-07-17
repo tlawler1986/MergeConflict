@@ -1,5 +1,7 @@
 # Merge Conflict - A CAH Joint
 
+![Merge Conflict Logo](/Users/swh2/code/ga/projects/MergeConflict/docs/images/mclogo.png)
+
 A Django-based multiplayer card game that brings the humor of Cards Against Humanity to the world of software development. Battle your fellow developers with programming jokes, git references, and all the tech humor that makes our daily lives both hilarious and painful.
 
 ---
