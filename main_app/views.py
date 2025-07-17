@@ -13,7 +13,7 @@ from .forms import SignUpForm, ProfileEditForm
 from .services import GameService
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership
+from .models import Room, Game, GamePlayer, CardSubmission, RoomMembership, CardPack
 from django.db.models import Max
 from django.core.cache import cache
 
@@ -37,6 +37,7 @@ def dashboard(request):
         max_players = int(request.POST.get('max-players', 8))
         round_limit = int(request.POST.get('round-limit', 10))
         turn_timer = int(request.POST.get('turn-timer', 3)) * 60  # Convert minutes to seconds
+        selected_pack_ids = request.POST.getlist('selected_packs')
         
         room = Room.objects.create(
             name=room_name,
@@ -45,6 +46,11 @@ def dashboard(request):
             round_limit=round_limit,
             turn_time_limit=turn_timer
         )
+        
+        # Add selected packs to the room
+        if selected_pack_ids:
+            room.selected_packs.set(selected_pack_ids)
+        
         # Add creator as member
         RoomMembership.objects.create(
             user=request.user,
@@ -52,8 +58,45 @@ def dashboard(request):
         )
         return redirect('room', room_code=room.room_code)
     
+    # Get available card packs from database, organized by source
+    # Use a single query with proper ordering
+    from django.db.models import Q, Case, When, Value, IntegerField
+    
+    # Define default pack names (these specific 4 packs)
+    default_pack_names = [
+        'Geek Pack',
+        'Nerd Bundle: A Few More Cards For You Nerds (Target Exclusive)', 
+        'Science Pack',
+        'World Wide Web Pack'
+    ]
+    
+    # Fetch all packs in one optimized query
+    all_packs = CardPack.objects.filter(is_active=True)
+    
+    # Separate packs by category
+    default_packs = list(all_packs.filter(name__in=default_pack_names).order_by('name'))
+    github_packs = list(all_packs.filter(name__startswith='[GitHub]').order_by('name'))
+    
+    # Default packs already have clean names, no need for display_name
+    
+    # REST Against Humanity packs (exclude default packs and GitHub packs)
+    api_packs = list(all_packs.exclude(
+        Q(name__in=default_pack_names) | Q(name__startswith='[GitHub]')
+    ).order_by('name'))
+    
+    # Add display_name for GitHub packs
+    for pack in github_packs:
+        pack.display_name = pack.name.replace('[GitHub] ', '')
+    
+    # Add display_name for API packs (remove "CAH" prefix)
+    for pack in api_packs:
+        pack.display_name = pack.name.replace('CAH: ', '').replace('CAH ', '')
+    
     context = {
         'user_rooms': user_rooms,
+        'default_packs': default_packs,
+        'api_packs': api_packs,
+        'github_packs': github_packs,
     }
     return render(request, 'dashboard.html', context)
 
@@ -555,8 +598,8 @@ def game_status(request, room_code):
             'total_players': 0,
         }
     
-    # Cache the result for 2 seconds (shorter than the 3-second poll interval)
-    cache.set(cache_key, data, timeout=2)
+    # Cache the result for 30 seconds to reduce database hits
+    cache.set(cache_key, data, timeout=30)
     
     return JsonResponse(data)
 
