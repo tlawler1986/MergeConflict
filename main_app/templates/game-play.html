@@ -151,6 +151,13 @@ let totalPlayers = {{ players|length }};
 
       // Update card backs display with animation
       const submittedCardsDiv = document.querySelector('.submitted-cards');
+      console.log('Update submission display called:', {
+          submittedCardsDiv: !!submittedCardsDiv,
+          currentRoundStatus,
+          submissionCount,
+          totalPlayers,
+          isJudge
+      });
       if (submittedCardsDiv && currentRoundStatus === 'card_selection') {
           const expectedSubmissions = totalPlayers - 1;
           const currentCards = submittedCardsDiv.querySelectorAll('.submitted-card').length;
@@ -192,10 +199,9 @@ let totalPlayers = {{ players|length }};
       }
   }
 
-// Only start polling if not judging or not the judge
-if (!(isJudge && currentRoundStatus === 'judging')) {
-    // Poll for game status updates every 3 seconds
-    const statusChecker = setInterval(function() {
+// Start polling for everyone during card selection, and for non-judges during judging
+// Poll for game status updates every 3 seconds
+const statusChecker = setInterval(function() {
         fetch("{% url 'game_status' room.room_code %}")
             .then(response => response.json())
             .then(data => {
@@ -210,6 +216,7 @@ if (!(isJudge && currentRoundStatus === 'judging')) {
                 // Update submission display if count changed
                 if (data.submissions_count !== currentSubmissionCount && currentRoundStatus === 'card_selection') {
                     console.log(`Submission count changed: ${currentSubmissionCount} -> ${data.submissions_count}`);
+                    console.log(`Is Judge: ${isJudge}, Round Status: ${currentRoundStatus}`);
                     currentSubmissionCount = data.submissions_count;
                     updateSubmissionDisplay(data.submissions_count, data.total_players);
                 }
@@ -223,10 +230,7 @@ if (!(isJudge && currentRoundStatus === 'judging')) {
             .catch(error => {
                 console.error('Status check failed:', error);
             });
-            }, 3000);
-} else {
-    console.log('Judge in judging phase - auto-refresh disabled');
-}
+}, 3000);
 
 // Function to submit card (instant submission on click)
 function submitCard(cardId) {
